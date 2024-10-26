@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+
 def request_categories_keyboard():
     order = InlineKeyboardButton(text="Вопрос по заявке/заказу", callback_data="order_request")
     payment = InlineKeyboardButton(text="Вопрос по взаиморасчётам", callback_data="payment_request")
@@ -11,6 +12,18 @@ def request_categories_keyboard():
         [payment],
         [account],
         [other]
+    ])
+
+    return keyboard
+
+
+def accept_or_skip():
+    accept = InlineKeyboardButton(text="Принять", callback_data="accept_request")
+    skip = InlineKeyboardButton(text="Пропустить", callback_data="skip_request")
+
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [accept, skip]
     ])
 
     return keyboard

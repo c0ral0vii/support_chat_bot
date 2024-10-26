@@ -12,6 +12,8 @@ alembic/versions/*.pyo
 alembic/versions/__pycache__/
 alembic
 
+creds.json
+
 *.log
 
 .vscode/
