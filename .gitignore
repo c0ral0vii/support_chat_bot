@@ -11,6 +11,8 @@ alembic/versions/
 
 creds.json
 
+creds.json
+
 *.log
 
 .vscode/
