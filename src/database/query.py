@@ -6,3 +6,7 @@ async def check_user_role(user_id: int):
         result = await session.execute()
         existing_user = result.scalars().first()
         return existing_user.role if existing_user else None
+
+
+async def save_message():
+    ...

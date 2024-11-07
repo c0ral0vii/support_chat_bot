@@ -1,11 +1,11 @@
 from dotenv import load_dotenv, find_dotenv
-from src.utils.user_data_parser import load_managers_ids
+# from src.utils.user_data_parser import load_managers_ids
 import os
 
 # 7757698162, 1061359692
 
 # получаем словарь внутри которого данные из google docs
-managers = load_managers_ids()
+# managers = load_managers_ids()
 load_dotenv(find_dotenv())
 
 BOT_TOKEN=str(os.environ.get("BOT_TOKEN"))
@@ -16,10 +16,10 @@ DB_PORT=str(os.environ.get("DB_PORT"))
 DB_USER=str(os.environ.get("DB_USER"))
 ADMINS_LIST = os.environ.get("ADMINS_LIST", "")
 ADMINS_LIST = list(map(int, ADMINS_LIST.split(","))) if ADMINS_LIST else []
-CLO_MANAGER = managers['CLO_MANAGER']
-SENIOR_CLO_MANAGER = managers['SENIOR_CLO_MANAGER']
-ACCOUNT_MANAGER = managers['ACCOUNT_MANAGER']
-EXECUTIVE_DIRECTOR = managers['EXECUTIVE_DIRECTOR']
+# CLO_MANAGER = managers['CLO_MANAGER']
+# SENIOR_CLO_MANAGER = managers['SENIOR_CLO_MANAGER']
+# ACCOUNT_MANAGER = managers['ACCOUNT_MANAGER']
+# EXECUTIVE_DIRECTOR = managers['EXECUTIVE_DIRECTOR']
 
 # print("BOT_TOKEN:", BOT_TOKEN)
 # print("DB_HOST:", DB_HOST)
