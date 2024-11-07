@@ -1,5 +1,6 @@
 from .settings import async_session
 
+
 async def check_user_role(user_id: int):
     async with async_session() as session:
         result = await session.execute()

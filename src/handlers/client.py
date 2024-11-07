@@ -6,6 +6,7 @@ from src.keyboards.inline.client_kb import request_categories_keyboard, accept_o
 from src.logger import logger
 from src.config import ACCOUNT_MANAGER, CLO_MANAGER, EXECUTIVE_DIRECTOR
 
+
 client_router = Router(name="client")
 
 

@@ -7,10 +7,7 @@ venv/
 .env
 .env.*
 
-alembic/versions/*.pyc
-alembic/versions/*.pyo
-alembic/versions/__pycache__/
-alembic
+alembic/versions/
 
 creds.json
 

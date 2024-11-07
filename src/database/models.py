@@ -3,9 +3,11 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from enum import Enum
 from sqlalchemy import Enum as SqlEnum
 
+
 class Base(DeclarativeBase):
     created: Mapped[DateTime] = mapped_column(DateTime, default=func.now())
     updated: Mapped[DateTime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
+
 
 class UserCategory(str, Enum):
     EXECUTIVE_DIRECTOR = "executive_director"
@@ -13,11 +15,13 @@ class UserCategory(str, Enum):
     SENIOR_CLO_MANAGER = "senior_clo_manager"
     CLO_MANAGER = "clo_manager"
 
+
 class RequestCategory(str, Enum):
     ORDER = "order"
     PAYMENT = "payment"
     ACCOUNT = "account"
     OTHER = "other"
+
 
 class RequestSubCategory(str, Enum):
     RESET_NP_AND_CHANGE_PAYER = "Заявка на обнуление НП и смену плательщика"
@@ -40,6 +44,7 @@ class User(Base):
 
     requests: Mapped["Requests"] = relationship("Requests", back_populates="user")
     ratings: Mapped["Rating"] = relationship("Rating", back_populates="user")
+
 
 class Client(Base):
     __tablename__ = "clients"
@@ -79,5 +84,8 @@ class Rating(Base):
     client: Mapped["Client"] = relationship("Client", back_populates="ratings")
 
 
-
-
+class Message(Base):
+    __tablename__ = 'messages'
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("userss.user_id"))
