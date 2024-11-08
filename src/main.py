@@ -1,12 +1,13 @@
 import asyncio
 from aiogram import Bot, Dispatcher, types
 from config import BOT_TOKEN
-from src.handlers.client import client_router
+from handlers.client import client_router
+from handlers.executive_director import executive_director
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-dp.include_routers(client_router)
+dp.include_routers(client_router, executive_director)
 
 async def on_startup(dp):
     commands = [

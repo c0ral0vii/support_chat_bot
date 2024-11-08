@@ -34,55 +34,56 @@ class RequestSubCategory(str, Enum):
     PROVIDE_DOCUMENTS = "Предоставление документов, подтверждающих доставку/отправку"
     CUSTOM_SUBCATEGORY = "Свой вариант подкатегории запроса"
 
+
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, unique=True, index=True)
     username: Mapped[str] = mapped_column(String, unique=True, index=True)
-    category: Mapped[UserCategory] = mapped_column(SqlEnum(UserCategory, name="category"))
 
     requests: Mapped["Request"] = relationship("Requests", back_populates="user")
-    ratings: Mapped["Rating"] = relationship("Rating", back_populates="user")
 
 
-class Client(Base):
-    __tablename__ = "clients"
+class Manager(Base):
+    __tablename__ = "managers"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, unique=True, index=True)
     username: Mapped[str] = mapped_column(String, unique=True, index=True)
+    category: Mapped[UserCategory] = mapped_column(SqlEnum(UserCategory, name="category"))
 
-    requests: Mapped["Request"] = relationship("Requests", back_populates="client")
-    ratings: Mapped["Rating"] = relationship("Rating", back_populates="client")
+
+    requests: Mapped["Request"] = relationship("Requests", back_populates="manager")
+
 
 class Request(Base):
     __tablename__ = "requests"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"))
-    client_id: Mapped[int] = mapped_column(Integer, ForeignKey("clients.user_id"))
+    client_id: Mapped[int] = mapped_column(Integer, ForeignKey("managers.user_id"))
     category: Mapped[UserCategory] = mapped_column(SqlEnum(RequestCategory, name="category"))
     subcategory: Mapped[UserCategory] = mapped_column(SqlEnum(RequestSubCategory, name="subcategory"), default=RequestSubCategory.CUSTOM_SUBCATEGORY)
 
     user: Mapped["User"] = relationship("User", back_populates="requests")
-    client: Mapped["Client"] = relationship("Client", back_populates="requests")
+    manager: Mapped["Manager"] = relationship("Manager", back_populates="requests")
 
     messages: Mapped[list["Message"]] = relationship("Message", back_populates="requests")
     ratings: Mapped["Rating"] = relationship("Rating", back_populates="request")
+
 
 class Rating(Base):
     __tablename__ = "ratings"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"))
-    client_id: Mapped[int] = mapped_column(Integer, ForeignKey("clients.user_id"))
+    client_id: Mapped[int] = mapped_column(Integer, ForeignKey("managers.user_id"))
     request_id: Mapped[int] = mapped_column(Integer, ForeignKey("requests.id"))
     rating_value: Mapped[int] = mapped_column(Integer, nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="ratings")
     request: Mapped["Request"] = relationship("Requests", back_populates="ratings")
-    client: Mapped["Client"] = relationship("Client", back_populates="ratings")
 
 
 class Message(Base):
@@ -91,7 +92,7 @@ class Message(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    operator: Mapped[int] = mapped_column(Integer, ForeignKey("clients.id"))
-    
+    manager: Mapped[int] = mapped_column(Integer, ForeignKey("managers.id"))
+
     request_id: Mapped[int] = mapped_column(Integer, ForeignKey("requests.id"))
     message: Mapped[str] = mapped_column(String(length=2500))
