@@ -1,6 +1,6 @@
 from aiogram import Router, F, types, Bot
 from aiogram.fsm.context import FSMContext
-from keyboards.inline.answer_kb import answer_client_keyboard, answer_manager_keyboard
+from src.services.bot.keyboards.inline.answer_kb import answer_client_keyboard, answer_manager_keyboard
 from logger import logger
 
 

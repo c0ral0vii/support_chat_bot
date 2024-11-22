@@ -1,13 +1,8 @@
-from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from .models import *
-from src.config import DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
+from src.services.config.config import settings
 
-print(f"Connecting to database at {DB_HOST}:{DB_PORT} as {DB_USER}")
-DATABASE_URL = f'postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
-
+DATABASE_URL = settings.get_database_link
 engine = create_async_engine(DATABASE_URL, echo=True)
 
 

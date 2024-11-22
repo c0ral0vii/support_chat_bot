@@ -18,16 +18,16 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from src.database.models import Base
+from src.services.database.models import Base
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-from src.database.settings import DATABASE_URL
-config.set_main_option(name='sqlalchemy.url', value='postgresql+asyncpg://root:root@0.0.0.0:5432/support_db?async_fallback=True')
 
+from src.services.config.config import settings
+config.set_main_option("sqlalchemy.url", f"{settings.get_database_link}?async_fallback=True")
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.

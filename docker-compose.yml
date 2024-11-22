@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres
-    container_name: db
+    container_name: db_support
     restart: always
     shm_size: 128mb
     environment:
@@ -9,5 +9,15 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_DB=${DB_NAME}
     ports:
-      - "5432:5432"
-  
+      - "${DB_PORT}:${DB_PORT}"
+
+#  bot:
+#    build:
+#      context: .
+#    container_name: tg_bot
+#    env_file:
+#      - .env
+#    depends_on:
+#      - db
+#    volumes:
+#      - .:/app
