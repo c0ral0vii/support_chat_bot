@@ -20,4 +20,5 @@ creds.json
 *.swp
 *.swo
 
-client_secret*
+token.json
+credentials.json
