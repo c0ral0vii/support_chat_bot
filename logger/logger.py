@@ -17,7 +17,7 @@ def setup_logger(name) -> logging.Logger:
 
     format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 
-    if settings.get_debug_settings():
+    if settings.get_debug_settings:
         debug_handler = logging.StreamHandler()
         debug_handler.setLevel(logging.DEBUG)
         debug_handler.setFormatter(logging.Formatter(format))

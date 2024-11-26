@@ -13,7 +13,7 @@ class Settings:
 
         # db
 
-        self.DB_HOST = '0.0.0.0'# str(os.environ.get("DB_HOST"))
+        self.DB_HOST = str(os.environ.get("DB_HOST")) # '0.0.0.0'
         self.DB_NAME = str(os.environ.get("DB_NAME"))
         self.DB_PASS = str(os.environ.get("DB_PASS"))
         self.DB_PORT = str(os.environ.get("DB_PORT"))
@@ -21,7 +21,7 @@ class Settings:
 
         # default link for managers
 
-        self._MANAGERS_LINK = "https://docs.google.com/spreadsheets/d/1jY-6h7R05p6BG617_LNR2pem0BS1BAtMFuOR_e-Mdl4/edit?gid=995008266#gid=995008266"
+        self._MANAGERS_LINK = "1jY-6h7R05p6BG617_LNR2pem0BS1BAtMFuOR_e-Mdl4"
 
         # debug
 
@@ -44,5 +44,5 @@ class Settings:
     def get_manager_link(self):
         return self._MANAGERS_LINK
 
-    
+
 settings = Settings()

@@ -15,15 +15,3 @@ def request_categories_keyboard():
     ])
 
     return keyboard
-
-
-def accept_or_skip():
-    accept = InlineKeyboardButton(text="Принять", callback_data="accept_request")
-    skip = InlineKeyboardButton(text="Пропустить", callback_data="skip_request")
-
-
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [accept, skip]
-    ])
-
-    return keyboard

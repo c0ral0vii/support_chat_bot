@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Numeric, String, Text, func, Integer
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Numeric, String, Text, func, Integer, BigInteger
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from enum import Enum
 from sqlalchemy import Enum as SqlEnum
@@ -34,6 +34,8 @@ class RequestSubCategory(str, Enum):
     PROVIDE_DOCUMENTS = "Предоставление документов, подтверждающих доставку/отправку"
     CUSTOM_SUBCATEGORY = "Свой вариант подкатегории запроса"
 
+    NOT_SETUP = "Не установлено / Заказ не закрыт"
+
 
 class User(Base):
     __tablename__ = "users"
@@ -42,21 +44,23 @@ class User(Base):
     user_id: Mapped[int] = mapped_column(Integer, unique=True, index=True)
     username: Mapped[str] = mapped_column(String, unique=True, index=True)
 
-    requests: Mapped["Request"] = relationship("Requests", back_populates="user")
+    requests: Mapped[list["Request"]] = relationship("Request", back_populates="user")
+    ratings: Mapped[list["Rating"]] = relationship("Rating", back_populates="user")
 
 
 class Manager(Base):
     __tablename__ = "managers"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     name: Mapped[str] = mapped_column(String, index=True)
     surname: Mapped[str] = mapped_column(String, index=True)
     username: Mapped[str] = mapped_column(String, unique=True, index=True)
     category: Mapped[UserCategory] = mapped_column(SqlEnum(UserCategory, name="category"), nullable=False)
+    free: Mapped[bool] = mapped_column(Boolean, default=True)
 
-
-    requests: Mapped["Request"] = relationship("Requests", back_populates="manager")
+    requests: Mapped[list["Request"]] = relationship("Request", back_populates="manager")
+    ratings: Mapped[list["Rating"]] = relationship("Rating", back_populates="manager")
 
 
 class Request(Base):
@@ -64,15 +68,20 @@ class Request(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"))
-    client_id: Mapped[int] = mapped_column(Integer, ForeignKey("managers.user_id"))
-    category: Mapped[UserCategory] = mapped_column(SqlEnum(RequestCategory, name="category"))
-    subcategory: Mapped[UserCategory] = mapped_column(SqlEnum(RequestSubCategory, name="subcategory"), default=RequestSubCategory.CUSTOM_SUBCATEGORY)
+    manager_id: Mapped[int] = mapped_column(Integer, ForeignKey("managers.user_id"), nullable=True)
+    request_category: Mapped[RequestCategory] = mapped_column(SqlEnum(RequestCategory, name="request_category"))
+    subcategory: Mapped[RequestSubCategory] = mapped_column(SqlEnum(RequestSubCategory, name="subcategory"),
+                                                            default=RequestSubCategory.NOT_SETUP)
+
+    close: Mapped[bool] = mapped_column(Boolean, default=False)
+    contact_number_or_inn: Mapped[str] = mapped_column(String, nullable=True)
+
 
     user: Mapped["User"] = relationship("User", back_populates="requests")
     manager: Mapped["Manager"] = relationship("Manager", back_populates="requests")
 
-    messages: Mapped[list["Message"]] = relationship("Message", back_populates="requests")
-    ratings: Mapped["Rating"] = relationship("Rating", back_populates="request")
+    messages: Mapped[list["Message"]] = relationship("Message", back_populates="request")
+    ratings: Mapped[list["Rating"]] = relationship("Rating", back_populates="request")
 
 
 class Rating(Base):
@@ -85,16 +94,19 @@ class Rating(Base):
     rating_value: Mapped[int] = mapped_column(Integer, nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="ratings")
-    request: Mapped["Request"] = relationship("Requests", back_populates="ratings")
+    manager: Mapped["Manager"] = relationship("Manager", back_populates="ratings")
+    request: Mapped["Request"] = relationship("Request", back_populates="ratings")
 
 
 class Message(Base):
     __tablename__ = 'messages'
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
-    manager: Mapped[int] = mapped_column(Integer, ForeignKey("managers.id"))
+
+    from_: Mapped[int] = mapped_column(String, nullable=False)
+    to_: Mapped[int] = mapped_column(String, nullable=False)
 
     request_id: Mapped[int] = mapped_column(Integer, ForeignKey("requests.id"))
     message: Mapped[str] = mapped_column(String(length=2500))
+
+    request: Mapped["Request"] = relationship("Request", back_populates="messages")

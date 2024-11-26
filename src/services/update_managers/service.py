@@ -1,7 +1,6 @@
 import asyncio
 from logger.logger import setup_logger
 from src.services.database.orm.managers import create_managers
-from src.services.database.models import UserCategory
 from src.services.utils.get_managers import get_managers
 
 
@@ -10,11 +9,11 @@ class UpdateManagerService:
                  logger=setup_logger(__name__),
                  ):
         self.logger = logger
-        self.timestamp = [30, 60, 120, 240, 360]
+        self.timestamp = [3600, 86400] # 1 h/2h/6h/1 day
 
     async def start(self):
         try:
-            asyncio.create_task(self._update_managers())
+            await self._update_managers()
 
         except Exception as e:
             self.logger.error(e)
@@ -25,7 +24,17 @@ class UpdateManagerService:
                 self.logger.info("Приступаем к обновлению менеджеров")
                 managers = await get_managers()
                 await create_managers(managers)
+                await asyncio.sleep(self.timestamp[-1])
+                await self.start()
 
             except Exception as e:
                 self.logger.error(f"Ошибка при обновлении менеджеров - {e}")
+                await asyncio.sleep(self.timestamp[-1])
+                await self.start()
 
+    async def add_my_time(self, delay: int):
+        try:
+            self.timestamp.append(int(delay))
+        except Exception as e:
+            self.logger.error(f"Ошибка изменения времени обновления менеджеров - {e}")
+            return

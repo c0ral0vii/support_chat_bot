@@ -13,3 +13,9 @@ class ClientForm(StatesGroup):
         'AuthForm:organization_name': 'Введите организацию заново:',
         'AuthForm:phone_number': 'Этот стейт последний, поэтому...',
     }
+
+
+class RequestSend(StatesGroup):
+    request = State()
+    manager = State()
+    client = State()
