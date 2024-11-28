@@ -6,7 +6,11 @@ from src.services.bot.handlers import (
     client,
     clo_manager,
     subcategory_handler,
-    messages_handler
+    messages_handler,
+    rating_handler,
+
+    executive_director,
+    senior_clo_manager,
 )
 
 from src.services.update_managers.service import UpdateManagerService
@@ -20,14 +24,16 @@ dp.include_routers(
     clo_manager.clo_manager_router,
     subcategory_handler.subcategory_router,
     messages_handler.message_router,
+    rating_handler.rating_router,
+
+    executive_director.executive_director_router,
+    senior_clo_manager.senior_clo_router,
 )
 
 
 async def on_startup():
     commands = [
-        types.BotCommand(command="/start", description="Запуск бота"),
-        types.BotCommand(command="/cancel", description="Отменить действие"),
-        types.BotCommand(command="/back", description="Назад")
+        types.BotCommand(command="/start", description="Запуск бота / Создать запрос"),
     ]
     await bot.set_my_commands(commands)
 
@@ -38,6 +44,7 @@ async def main():
     await on_startup()
     print("Started")
     await dp.start_polling(bot)
+
 
 if __name__ == '__main__':
     asyncio.run(main())

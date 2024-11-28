@@ -1,15 +1,12 @@
-import asyncio
-
 from aiogram import Router, F, types, Bot
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import InlineKeyboardMarkup
 
 from logger.logger import setup_logger
 from src.services.bot.keyboards.inline.rating_client import create_rating
 from src.services.bot.keyboards.inline.subcategory_manager import get_subcategory_markup
 from src.services.database.orm.create_request import accept_request, close_request_status, get_request as get_data_request
-from src.services.database.models import RequestCategory, Request
+from src.services.database.models import RequestCategory
 from src.services.bot.keyboards.inline.answer_kb import answer_manager_keyboard
 from src.services.bot.fsm.client_fsm import RequestSend
 
@@ -48,11 +45,19 @@ async def get_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext
     await callback.message.answer(f"Вы приняли запрос под номером - {request.id}.", reply_markup=answer_manager_keyboard(request_id=request.id, user_id=manager_id))
 
 
-@clo_manager_router.callback_query(lambda query: "up_chat_" in query.data)
+@clo_manager_router.callback_query(lambda query: "change_category_chat_" in query.data)
 async def up_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext):
     """Поднять запрос выше"""
 
-    ...
+    manager_id = callback.from_user.id
+    callback_data = callback.data.split("_")
+    logger.info(f"Менеджер {manager_id} - поменял категорию запроса - {callback_data[-1]}")
+
+    # data = {
+    #     "request_id": int(callback_data[-1]),
+    #     "user_category": ,
+    #     "status": ,
+    # }
 
 
 @clo_manager_router.callback_query(lambda query: "close_chat_" in query.data)

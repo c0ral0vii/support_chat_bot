@@ -35,6 +35,7 @@ async def create_subcategory(callback: types.CallbackQuery):
     if subcategory_data[1] == "8":
         subcategory = RequestSubCategory.PROVIDE_DOCUMENTS
 
+    await callback.message.edit_text("Подкатегория выбрана, заказ закрыт!")
+
     await change_subcategory(request_id=int(subcategory_data[-1]), subcategory=subcategory)
 
-    await callback.message.answer("Готово!")

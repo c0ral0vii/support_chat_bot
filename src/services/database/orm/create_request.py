@@ -15,10 +15,10 @@ logger = setup_logger(__name__)
 async def create_request(data: Dict[str, Any]) -> Request:
     async with async_session() as session:
         try:
-            user = await get_user(data["user_id"])
+            user = await get_user(int(data["user_id"]))
             # manager = await get_manager(data["manager_id"])
 
-            logger.debug(f"{user.user_id}")
+            logger.debug(f"{data=}")
 
             new_request = Request(
                 user_id=user.user_id,
@@ -103,10 +103,15 @@ async def close_request_status(request_id: int) -> dict:
 
 async def change_subcategory(request_id: int, subcategory: RequestSubCategory) -> NoReturn:
     request = await get_request(request_id, full_model=True)
+
+    if request is None:
+        logger.error(f"Request with ID {request_id} not found")
+        return
+
     async with async_session() as session:
         try:
-            request.subcategory = RequestSubCategory(subcategory)
-
+            request.subcategory = subcategory
+            session.add(request)
             await session.commit()
         except Exception as e:
             logger.debug(e)

@@ -12,6 +12,14 @@ logger = setup_logger(__name__)
 async def create_user(data: Dict[str, Any]) -> User:
     async with async_session() as session:
         try:
+            stmt = select(User).where(User.id == data['user_id'])
+            result = await session.execute(stmt)
+            user = result.scalar_one_or_none()
+
+            if user:
+                logger.info("Данный пользователь уже существует")
+                return user
+
             user = User(
                 user_id=data["user_id"],
                 username=data.get('username') if data.get("username") else "Не задано",
@@ -24,11 +32,11 @@ async def create_user(data: Dict[str, Any]) -> User:
             return user
 
         except Exception as e:
-            logger.error("Ошибка при создании пользователя")
+            logger.error(f"Ошибка при создании пользователя, {e}")
             await session.rollback()
 
 
-async def get_user(user_id: str) -> User:
+async def get_user(user_id: int) -> User:
     async with async_session() as session:
         try:
             stmt = select(User).where(User.user_id == user_id)
@@ -42,5 +50,5 @@ async def get_user(user_id: str) -> User:
                 )
             return user
         except Exception as e:
-            logger.error("Ошибка создания или пользователь уже существует")
+            logger.error(f"Ошибка создания или пользователь уже существует, {e}")
             await session.rollback()

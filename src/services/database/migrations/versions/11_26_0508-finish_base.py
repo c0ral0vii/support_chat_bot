@@ -1,8 +1,8 @@
-"""finish1
+"""finish_base
 
-Revision ID: 55094a0f975d
+Revision ID: 749c19fafdaf
 Revises: 
-Create Date: 2024-11-25 12:40:22.581241
+Create Date: 2024-11-26 05:08:55.668724
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '55094a0f975d'
+revision: str = '749c19fafdaf'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -38,7 +38,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_managers_username'), 'managers', ['username'], unique=True)
     op.create_table('users',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.BigInteger(), nullable=False),
     sa.Column('username', sa.String(), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
     sa.Column('updated', sa.DateTime(), nullable=False),
@@ -48,13 +48,12 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_username'), 'users', ['username'], unique=True)
     op.create_table('requests',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('manager_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', sa.BigInteger(), nullable=False),
+    sa.Column('manager_id', sa.BigInteger(), nullable=True),
     sa.Column('request_category', sa.Enum('ORDER', 'PAYMENT', 'ACCOUNT', 'OTHER', name='request_category'), nullable=False),
-    sa.Column('subcategory', sa.Enum('RESET_NP_AND_CHANGE_PAYER', 'CREATE_INVOICE_OR_REQUEST', 'CHANGE_RECIPIENT_CONTACTS', 'CHANGE_DELIVERY_MODE_OR_PICKUP', 'ORDER_FORWARDING', 'CARGO_SEARCH', 'CONSULTATION_ON_TS_AND_DELIVERY', 'PROVIDE_DOCUMENTS', 'CUSTOM_SUBCATEGORY', name='subcategory'), nullable=False),
+    sa.Column('subcategory', sa.Enum('RESET_NP_AND_CHANGE_PAYER', 'CREATE_INVOICE_OR_REQUEST', 'CHANGE_RECIPIENT_CONTACTS', 'CHANGE_DELIVERY_MODE_OR_PICKUP', 'ORDER_FORWARDING', 'CARGO_SEARCH', 'CONSULTATION_ON_TS_AND_DELIVERY', 'PROVIDE_DOCUMENTS', 'CUSTOM_SUBCATEGORY', 'NOT_SETUP', name='subcategory'), nullable=False),
     sa.Column('close', sa.Boolean(), nullable=False),
     sa.Column('contact_number_or_inn', sa.String(), nullable=True),
-    sa.Column('delete_time', sa.DateTime(), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
     sa.Column('updated', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['manager_id'], ['managers.user_id'], ),
@@ -63,8 +62,7 @@ def upgrade() -> None:
     )
     op.create_table('messages',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('from_', sa.String(), nullable=False),
-    sa.Column('to_', sa.String(), nullable=False),
+    sa.Column('from_', sa.BigInteger(), nullable=False),
     sa.Column('request_id', sa.Integer(), nullable=False),
     sa.Column('message', sa.String(length=2500), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
@@ -74,15 +72,11 @@ def upgrade() -> None:
     )
     op.create_table('ratings',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('client_id', sa.Integer(), nullable=False),
     sa.Column('request_id', sa.Integer(), nullable=False),
     sa.Column('rating_value', sa.Integer(), nullable=False),
     sa.Column('created', sa.DateTime(), nullable=False),
     sa.Column('updated', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['client_id'], ['managers.user_id'], ),
     sa.ForeignKeyConstraint(['request_id'], ['requests.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['users.user_id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

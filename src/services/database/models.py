@@ -41,11 +41,10 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     username: Mapped[str] = mapped_column(String, unique=True, index=True)
 
     requests: Mapped[list["Request"]] = relationship("Request", back_populates="user")
-    ratings: Mapped[list["Rating"]] = relationship("Rating", back_populates="user")
 
 
 class Manager(Base):
@@ -60,15 +59,14 @@ class Manager(Base):
     free: Mapped[bool] = mapped_column(Boolean, default=True)
 
     requests: Mapped[list["Request"]] = relationship("Request", back_populates="manager")
-    ratings: Mapped[list["Rating"]] = relationship("Rating", back_populates="manager")
 
 
 class Request(Base):
     __tablename__ = "requests"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"))
-    manager_id: Mapped[int] = mapped_column(Integer, ForeignKey("managers.user_id"), nullable=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.user_id"))
+    manager_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("managers.user_id"), nullable=True)
     request_category: Mapped[RequestCategory] = mapped_column(SqlEnum(RequestCategory, name="request_category"))
     subcategory: Mapped[RequestSubCategory] = mapped_column(SqlEnum(RequestSubCategory, name="subcategory"),
                                                             default=RequestSubCategory.NOT_SETUP)
@@ -88,13 +86,9 @@ class Rating(Base):
     __tablename__ = "ratings"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"))
-    client_id: Mapped[int] = mapped_column(Integer, ForeignKey("managers.user_id"))
     request_id: Mapped[int] = mapped_column(Integer, ForeignKey("requests.id"))
     rating_value: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    user: Mapped["User"] = relationship("User", back_populates="ratings")
-    manager: Mapped["Manager"] = relationship("Manager", back_populates="ratings")
     request: Mapped["Request"] = relationship("Request", back_populates="ratings")
 
 
@@ -103,8 +97,7 @@ class Message(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    from_: Mapped[int] = mapped_column(String, nullable=False)
-    to_: Mapped[int] = mapped_column(String, nullable=False)
+    from_: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
     request_id: Mapped[int] = mapped_column(Integer, ForeignKey("requests.id"))
     message: Mapped[str] = mapped_column(String(length=2500))

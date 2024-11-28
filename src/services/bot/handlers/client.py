@@ -43,6 +43,10 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
     #             return
 
     # if 9 < int(time.strftime('%H')) < 18: # TODO включить при пуше
+    await create_user({
+        "user_id": int(message.from_user.id),
+        "username": message.from_user.username,
+    })
     await message.answer(
         "Добрый день, режим работы с 9:00 до 19:00 МСК!\nДля обработки запроса укажите номер договора или ИНН")
     await state.clear()
@@ -55,10 +59,6 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
 @client_router.message(ClientForm.contract_number_or_inn)
 async def proccess_contract_number_or_inn(message: types.Message, state: FSMContext) -> None:
     await state.update_data(contract_number_or_inn=message.text)
-    await create_user({
-        "user_id": int(message.from_user.id),
-        "username": message.from_user.username,
-    })
 
     await message.answer("Выберите, пожалуйста, категорию вашего запроса:", reply_markup=request_categories_keyboard())
 
@@ -69,25 +69,22 @@ async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, d
     await callback.message.answer("В течение 10 минут с вами свяжется первый освободившийся менеджер.")
 
     messages = []
-
+    logger.debug(data)
     request = await create_request(data=data)
 
     for i in managers:
         try:
-
-            if not data["user_category"] is None:
-                if i.category == data['user_category'] and i.free:
-                    message = await bot.send_message(chat_id=i.user_id, text=data["message_text"],
-                                                     reply_markup=answer_keyboard(request_id=request.id))
-                    messages.append(message)
-
-
             if type(data["user_category"]) == list:
                 for user_category in data["user_category"]:
                     if i.category == user_category:
                         message = await bot.send_message(chat_id=i.user_id, text=data["message_text"],
                                                          reply_markup=answer_keyboard(request_id=request.id))
                         messages.append(message)
+            else:
+                if i.category == data['user_category'] and i.free:
+                    message = await bot.send_message(chat_id=i.user_id, text=data["message_text"],
+                                                     reply_markup=answer_keyboard(request_id=request.id))
+                    messages.append(message)
 
         except TelegramBadRequest as e:
             logger.warning(e)
@@ -101,6 +98,8 @@ async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, d
 async def _create_notification(messages: list[types.Message], bot: Bot, data: dict, managers: list, request: Request, max_interval: int = 999) -> None:
     interval = 0
     while True:
+        await asyncio.sleep(60)
+
         check_request = await get_request(request_id=request.id)
         if check_request["request_manager"] or check_request["request_status"]:
             await delete_message(messages)
@@ -109,12 +108,16 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
         if interval == max_interval:
             if max_interval != 30:
                 data["max_interval"] = 30
+                new_message = f"!!->Просрочен---{data["message_text"]}---Просрочен<-!!"
+                data["message_text"] = new_message
                 data["user_category"] = [UserCategory.SENIOR_CLO_MANAGER, UserCategory.ACCOUNT_MANAGER]
                 asyncio.create_task(_create_notification(messages, bot, data, managers, request, max_interval))
+
             if max_interval == 30:
                 await bot.send_message(chat_id=data["user_id"], text="Вы можете связаться со своим закрепленным менеджером.")
                 break
             break
+
         interval += 1
 
         for i in managers:
@@ -133,8 +136,6 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
                             message = await bot.send_message(chat_id=i.user_id, text=data["message_text"],
                                                              reply_markup=answer_keyboard(request_id=request.id))
                             messages.append(message)
-
-                await asyncio.sleep(60)
             except Exception as e:
                 logger.warning(e)
                 continue
@@ -147,6 +148,8 @@ async def delete_message(messages):
 
 @client_router.callback_query(lambda c: c.data == "order_request", StateFilter(ClientForm))
 async def handle_order_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext):
+    await callback.message.delete()
+
     user_id = callback.from_user.id
     username = callback.from_user.username or "Неизвестный пользователь"
 
@@ -169,6 +172,8 @@ async def handle_order_request(callback: types.CallbackQuery, bot: Bot, state: F
 
 @client_router.callback_query(lambda c: c.data == "account_request", StateFilter(ClientForm))
 async def handle_account_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext):
+    await callback.message.delete()
+
     user_id = callback.from_user.id
     username = callback.from_user.username or "Неизвестный пользователь"
 
@@ -190,6 +195,8 @@ async def handle_account_request(callback: types.CallbackQuery, bot: Bot, state:
 
 @client_router.callback_query(lambda c: c.data == "other_request", StateFilter(ClientForm))
 async def handle_other_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext):
+    await callback.message.delete()
+
     user_id = callback.from_user.id
     username = callback.from_user.username or "Неизвестный пользователь"
 
@@ -211,6 +218,7 @@ async def handle_other_request(callback: types.CallbackQuery, bot: Bot, state: F
 
 @client_router.callback_query(lambda c: c.data == "payment_request", StateFilter(ClientForm))
 async def handle_payment_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext):
+    await callback.message.delete()
 
     user_id = callback.from_user.id
     username = callback.from_user.username or "Неизвестный пользователь"
