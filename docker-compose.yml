@@ -11,13 +11,13 @@ services:
     ports:
       - "${DB_PORT}:${DB_PORT}"
 
-#  bot:
-#    build:
-#      context: .
-#    container_name: tg_bot
-#    env_file:
-#      - .env
-#    depends_on:
-#      - db
-#    volumes:
-#      - .:/app
+  bot:
+    build:
+      context: .
+    container_name: tg_bot
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - .:/app

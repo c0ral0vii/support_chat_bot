@@ -18,12 +18,13 @@ def answer_keyboard(request_id: int):
     return keyboard
 
 
-def answer_client_keyboard(manager_id: int):
+async def answer_client_keyboard(request_id: int, user_id: int):
     '''
     Ответ менеджеру
     '''
 
-    send_message = InlineKeyboardButton(text='Отправить сообщение', callback_data=f'send_message_{manager_id}')
+    send_message = InlineKeyboardButton(text='Отправить сообщение',
+                                        callback_data=f'send_message_{request_id}_{user_id}')
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [send_message]

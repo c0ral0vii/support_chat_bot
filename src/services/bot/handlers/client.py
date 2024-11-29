@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters import CommandStart, StateFilter
 from aiogram.exceptions import TelegramBadRequest
 from logger.logger import setup_logger
-from src.services.database.models import UserCategory, RequestCategory, Request
+from src.services.database.models import UserCategory, RequestCategory, Request, Manager
 from src.services.bot.fsm.client_fsm import ClientForm
 from src.services.database.orm.create_request import create_request, get_request
 from src.services.database.orm.managers import get_managers, get_manager
@@ -26,35 +26,34 @@ logger = setup_logger(__name__)
 
 @client_router.message(CommandStart())
 async def start_handler(message: types.Message, state: FSMContext) -> None:
-    # try:
-    #     user_id = message.from_user.id
-    #     manager = await get_manager(user_id=user_id)
-    #
-    #     if manager:
-    #         if manager.category == UserCategory.EXECUTIVE_DIRECTOR:
-    #             await message.answer("Вы вступили в пост 'Исполнительный директор'.", reply_markup=executive_director_kb.executive_director_keyboards())
-    #             return
-    #         if manager.category == UserCategory.SENIOR_CLO_MANAGER:
-    #             await message.answer("Вы вступили в пост 'Старший менеджер КЛО'.", reply_markup=senior_clo_manager.senior_clo_manager())
-    #             return
-    #         if manager.category == UserCategory.CLO_MANAGER:
-    #             await message.answer("Вы вступили на пост 'Менеджеры КЛО'.")
-    #             return
-    #         if manager.category == UserCategory.ACCOUNT_MANAGER:
-    #             await message.answer("Вы вступили на пост 'Менеджеры по сопровождению'.")
-    #             return
+    user_id = message.from_user.id
+    manager = await get_manager(user_id=user_id)
 
-    # if 9 < int(time.strftime('%H')) < 18: # TODO включить при пуше
-    await create_user({
-        "user_id": int(message.from_user.id),
-        "username": message.from_user.username,
-    })
-    await message.answer(
-        "Добрый день, режим работы с 9:00 до 19:00 МСК!\nДля обработки запроса укажите номер договора или ИНН")
-    await state.clear()
-    await state.set_state(ClientForm.contract_number_or_inn)
-    # else:
-    #     await message.answer("Ой, все уже ушли домой, как только вернемся на работу, обязательно вам ответим")
+    if isinstance(manager, Manager):
+        if manager.category == UserCategory.EXECUTIVE_DIRECTOR:
+            await message.answer("Вы вступили в пост 'Исполнительный директор'.", reply_markup=executive_director_kb.executive_director_keyboards())
+            return
+        if manager.category == UserCategory.SENIOR_CLO_MANAGER:
+            await message.answer("Вы вступили в пост 'Старший менеджер КЛО'.", reply_markup=senior_clo_manager.senior_clo_manager())
+            return
+        if manager.category == UserCategory.CLO_MANAGER:
+            await message.answer("Вы вступили на пост 'Менеджеры КЛО'.")
+            return
+        if manager.category == UserCategory.ACCOUNT_MANAGER:
+            await message.answer("Вы вступили на пост 'Менеджеры по сопровождению'.")
+            return
+
+    if 9 < int(time.strftime('%H')) < 19: # TODO включить при пуше
+        await create_user({
+            "user_id": int(message.from_user.id),
+            "username": message.from_user.username,
+        })
+        await message.answer(
+            "Добрый день, режим работы с 9:00 до 19:00 МСК!\nДля обработки запроса укажите номер договора или ИНН")
+        await state.clear()
+        await state.set_state(ClientForm.contract_number_or_inn)
+    else:
+        await message.answer("Ой, все уже ушли домой, как только вернемся на работу, обязательно вам ответим")
 
 
 

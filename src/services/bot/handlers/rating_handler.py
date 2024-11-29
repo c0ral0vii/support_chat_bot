@@ -12,7 +12,7 @@ async def rating_handler(callback: types.CallbackQuery, bot: Bot, state: FSMCont
 
     await set_rating(rating=int(rating_data[-2]), request_id=int(rating_data[-1]))
     if 3 <= int(rating_data[-2]):
-        await callback.message.edit_text("Спасибо за ваш отзыв, ваш отзыв очень важен для нас!с!\nЕсли у вас остались вопросы создайте ещё один запрос!")
+        await callback.message.edit_text("Спасибо за ваш отзыв, ваш отзыв очень важен для нас!\nЕсли у вас остались вопросы создайте ещё один запрос!")
     else:
         await callback.message.edit_text("Приносим наши извинения, ваш отзыв очень важен для нас!\nЕсли остались вопросы создайте ещё один запрос!")
 

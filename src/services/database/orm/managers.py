@@ -87,6 +87,7 @@ async def get_manager(user_id: int) -> Manager | Dict[str, Any] | None:
                     "error": 200,
                     "text": "Not Found"
                 }
+            
             return manager
         except Exception as e:
             await session.rollback()
