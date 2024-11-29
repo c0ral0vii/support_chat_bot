@@ -8,23 +8,45 @@ from sqlalchemy import delete, select, or_
 logger = setup_logger(__name__)
 
 
+from sqlalchemy.exc import IntegrityError
+
 async def create_managers(all_data: Dict[str, Any]) -> None:
     async with async_session() as session:
         try:
             for user_id, data in all_data.items():
                 logger.debug(user_id, data)
-                manager = Manager(
-                    user_id=int(user_id),
-                    name=data.get('name')[0],
-                    surname=data.get('name')[-1],
-                    username=data.get('name')[0],
-                    category=UserCategory(data.get('status')),
-                )
+                try:
+                    # Проверка на существование записи с таким же username
+                    existing_manager = await session.execute(
+                        select(Manager).filter_by(username=user_id)
+                    )
+                    existing_manager = existing_manager.scalar()
 
-                session.add(manager)
-            await session.commit()
-            logger.debug("комит")
+                    if existing_manager:
+                        logger.debug(f"Manager with username {data.get('username', '@')} already exists. Skipping.")
+                        continue
+
+                    manager = Manager(
+                        user_id=int(user_id),
+                        name=data.get('name')[0],
+                        surname=data.get('name')[-1],
+                        username=user_id,
+                        category=UserCategory(data.get('status')),
+                    )
+
+                    session.add(manager)
+                    await session.commit()
+                except IntegrityError as e:
+                    logger.debug(f"IntegrityError: {e}")
+                    await session.rollback()
+                    continue
+                except Exception as e:
+                    logger.debug(f"Exception: {e}")
+                    await session.rollback()
+                    continue
+            logger.debug("Commit successful")
         except Exception as e:
+            logger.debug(f"Exception: {e}")
             await session.rollback()
 
 

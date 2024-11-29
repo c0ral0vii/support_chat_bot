@@ -3,12 +3,16 @@ from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 
 from logger.logger import setup_logger
+from src.services.bot.handlers.client import _request
+from src.services.bot.keyboards.inline.change_category_kb import change_category_kb
 from src.services.bot.keyboards.inline.rating_client import create_rating
 from src.services.bot.keyboards.inline.subcategory_manager import get_subcategory_markup
-from src.services.database.orm.create_request import accept_request, close_request_status, get_request as get_data_request
-from src.services.database.models import RequestCategory
+from src.services.database.orm.create_request import accept_request, close_request_status, \
+    get_request as get_data_request, redirect_request
+from src.services.database.models import RequestCategory, UserCategory
 from src.services.bot.keyboards.inline.answer_kb import answer_manager_keyboard
 from src.services.bot.fsm.client_fsm import RequestSend
+from src.services.task_control.services import TaskControlService, TASK_CONTROL_SERVICE
 
 clo_manager_router = Router(name='clo_manager')
 
@@ -51,13 +55,58 @@ async def up_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext)
 
     manager_id = callback.from_user.id
     callback_data = callback.data.split("_")
-    logger.info(f"Менеджер {manager_id} - поменял категорию запроса - {callback_data[-1]}")
+    logger.info(f"Менеджер {manager_id} - меняет категорию у запроса - {callback_data[-1]}")
 
-    # data = {
-    #     "request_id": int(callback_data[-1]),
-    #     "user_category": ,
-    #     "status": ,
-    # }
+
+    await callback.message.answer("На какую категорию вы хотите поменять запрос:", reply_markup=change_category_kb(request_id=callback_data[-1]))
+
+
+
+@clo_manager_router.callback_query(lambda query: "change_to_" in query.data)
+async def change_category(callback: types.CallbackQuery, bot: Bot, state: FSMContext):
+    callback_data = callback.data.split("_")
+    to_category = None
+    status = None
+
+    if callback_data[-2] == "clo":
+        to_category = UserCategory.CLO_MANAGER
+        status = RequestCategory.ORDER
+
+    if callback_data[-2] == "director":
+        to_category = UserCategory.EXECUTIVE_DIRECTOR
+        status = RequestCategory.PAYMENT
+
+    if callback_data[-2] == "account":
+        to_category = UserCategory.ACCOUNT_MANAGER
+        status = RequestCategory.ACCOUNT
+
+    request_model = await get_data_request(request_id=int(callback_data[-1]), full_model=True)
+    message_text = f"На вас перенаправлен запрос -> {request_model.id} <-> (Номер договора/ИНН: {request_model.contact_number_or_inn}, ID: {request_model.user_id}) отправил запрос по взаиморасчетам."
+
+    if status is None or to_category is None:
+        logger.error("Ошибка при перенаправлении")
+        await callback.message.answer("Произошла ошибка при перенаправлении")
+        return
+
+    data = {
+        "message_text": message_text,
+        "request_id": int(callback_data[-1]),
+        "user_category": to_category,
+        "status": status,
+    }
+
+    stop_output = await TASK_CONTROL_SERVICE.stop_task(request_id=int(callback_data[-1]))
+
+    if stop_output:
+        await callback.message.delete()
+        output = await redirect_request(request_id=int(callback_data[-1]), data=data)
+
+
+        await _request(callback=callback, bot=bot, state=state, data=data, create=False)
+        await state.clear()
+        await callback.message.answer("Запрос перенаправлен")
+    else:
+        await callback.message.answer(f"Не удалось перенести на другую категорию так как кто то уже перенёс этот заказ")
 
 
 @clo_manager_router.callback_query(lambda query: "close_chat_" in query.data)

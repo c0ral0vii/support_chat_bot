@@ -76,6 +76,7 @@ async def get_request(request_id: int, full_model: bool = False) -> dict[str, An
             "request_manager": request.manager_id,
             "request_status": request.close,
             "request_user_id": request.user_id,
+            "request_category": request.request_category,
         }
 
 
@@ -116,3 +117,25 @@ async def change_subcategory(request_id: int, subcategory: RequestSubCategory) -
         except Exception as e:
             logger.debug(e)
             await session.rollback()
+
+
+async def redirect_request(request_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    async with async_session() as session:
+        try:
+            stmt = select(Request).where(Request.id == request_id)
+            result = await session.execute(stmt)
+            request = result.scalar_one_or_none()
+
+            request.request_category = RequestCategory(data["status"])
+            request.manager_id = None
+
+            session.add(request)
+            await session.commit()
+
+            return {
+                "status": 200,
+            }
+        except Exception as e:
+            logger.debug(e)
+            logger.error(f"Произошла ошибка при перенаправлении - {e}")
+            session.rollback()

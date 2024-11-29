@@ -1,3 +1,5 @@
+from email.policy import default
+
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Numeric, String, Text, func, Integer, BigInteger
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from enum import Enum
@@ -42,7 +44,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
-    username: Mapped[str] = mapped_column(String, unique=True, index=True)
+    username: Mapped[str] = mapped_column(String)
 
     requests: Mapped[list["Request"]] = relationship("Request", back_populates="user")
 

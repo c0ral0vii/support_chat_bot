@@ -17,6 +17,8 @@ from src.services.bot.keyboards.reply import (
     executive_director_kb
 )
 from src.services.database.orm.users import create_user
+from src.services.task_control.services import TaskControlService, TASK_CONTROL_SERVICE
+
 client_router = Router(name="client")
 
 logger = setup_logger(__name__)
@@ -63,14 +65,17 @@ async def proccess_contract_number_or_inn(message: types.Message, state: FSMCont
     await message.answer("Выберите, пожалуйста, категорию вашего запроса:", reply_markup=request_categories_keyboard())
 
 
-async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, data: dict):
+async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, data: dict, create: bool = True):
     managers = await get_managers()
 
     await callback.message.answer("В течение 10 минут с вами свяжется первый освободившийся менеджер.")
 
     messages = []
     logger.debug(data)
-    request = await create_request(data=data)
+    if create:
+        request = await create_request(data=data)
+    else:
+        request = await get_request(request_id=int(data["request_id"]), full_model=True)
 
     for i in managers:
         try:
@@ -92,7 +97,10 @@ async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, d
     logger.debug("разослали все сообщения")
 
 
-    asyncio.create_task(_create_notification(messages=messages, bot=bot, data=data, managers=managers, request=request, max_interval=data["max_interval"]))
+    task = asyncio.create_task(_create_notification(messages=messages, bot=bot, data=data, managers=managers, request=request, max_interval=data.get("max_interval", 999)))
+    data_task = {request.id: task}
+    await TASK_CONTROL_SERVICE.add_task(task=data_task)
+    logger.debug(data_task)
 
 
 async def _create_notification(messages: list[types.Message], bot: Bot, data: dict, managers: list, request: Request, max_interval: int = 999) -> None:
@@ -113,7 +121,7 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
                 data["user_category"] = [UserCategory.SENIOR_CLO_MANAGER, UserCategory.ACCOUNT_MANAGER]
                 asyncio.create_task(_create_notification(messages, bot, data, managers, request, max_interval))
 
-            if max_interval == 30:
+            if max_interval == 30 and interval == 30:
                 await bot.send_message(chat_id=data["user_id"], text="Вы можете связаться со своим закрепленным менеджером.")
                 break
             break

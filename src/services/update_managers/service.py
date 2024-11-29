@@ -23,6 +23,7 @@ class UpdateManagerService:
             try:
                 self.logger.info("Приступаем к обновлению менеджеров")
                 managers = await get_managers()
+                self.logger.debug(managers)
                 await create_managers(managers)
                 await asyncio.sleep(self.timestamp[-1])
                 await self.start()
