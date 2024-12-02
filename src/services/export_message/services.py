@@ -21,7 +21,7 @@ class ExportMessageService:
         df = pd.DataFrame([{
             "От кого": message.from_,
             "Сообщение": message.message,
-            "Отправлено": message.created,
+            "Отправлено": str(message.created),
         } for message in messages])
 
         excel_file = f"./temp/dialog_files/dialog_{str(request_id)}.xlsx"

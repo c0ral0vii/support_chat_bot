@@ -41,7 +41,7 @@ async def detail(callback: types.CallbackQuery, state: FSMContext):
     data = callback.data.split("_")[-1]
     request_data = await get_request(request_id=int(data), full_model=True)
 
-    await callback.message.answer(f"Запрос - {request_data.id}:\nЗакрыт: {"✅" if request_data.close else '❌'}\nМенеджер принявший: {request_data.manager_id}\nПользователь: {request_data.user_id}\nКатегория: {request_data.request_category.value}\nПодкатегория: {request_data.subcategory.value}\n\nСоздан: {request_data.created}\nПоследнее обновление: {request_data.updated}",
+    await callback.message.answer(f"Запрос - {request_data.id}:\nЗакрыт: {"✅" if request_data.close else '❌'}\nИНН: {request_data.contact_number_or_inn}\nМенеджер принявший: {request_data.manager_id}\nПользователь: {request_data.user_id}\nКатегория: {request_data.request_category.value}\nПодкатегория: {request_data.subcategory.value}\n\nСоздан: {request_data.created}\nПоследнее обновление: {request_data.updated}",
                                   reply_markup=await detail_request(request_id=int(request_data.id)))
 
 
