@@ -18,10 +18,14 @@ from src.services.bot.keyboards.reply import (
 )
 from src.services.database.orm.users import create_user
 from src.services.task_control.services import TASK_CONTROL_SERVICE
+import pytz
+import datetime
 
 client_router = Router(name="client")
 
 logger = setup_logger(__name__)
+moscow_tz = pytz.timezone('Europe/Moscow')
+moscow_time = datetime.datetime.now(moscow_tz)
 
 
 @client_router.message(CommandStart())
@@ -43,7 +47,7 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
             await message.answer("Вы вступили на пост 'Менеджеры по сопровождению'.")
             return
 
-    if 9 < int(time.strftime('%H')) < 19: # TODO включить при пуше
+    if 9 < moscow_time.hour < 19:
         await create_user({
             "user_id": int(message.from_user.id),
             "username": message.from_user.username,
