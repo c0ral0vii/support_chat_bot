@@ -54,6 +54,7 @@ class Manager(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    field: Mapped[str] = mapped_column(String(150), nullable=True)
     name: Mapped[str] = mapped_column(String, index=True)
     surname: Mapped[str] = mapped_column(String, index=True)
     username: Mapped[str] = mapped_column(String, unique=True, index=True)

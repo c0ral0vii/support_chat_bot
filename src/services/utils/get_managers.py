@@ -50,7 +50,7 @@ async def get_managers():
             name = row[1].split()
             user_id = row[-1]
             if len(row[-1]) > 2:
-                managers[user_id] = {"status": status, "name": name}
+                managers[user_id] = {"status": status, "name": name, "field": row[0]}
         return managers
     except HttpError as error:
         print(error)

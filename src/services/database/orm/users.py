@@ -1,6 +1,8 @@
 from typing import Dict, Any
 
+from asyncpg import UniqueViolationError
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from logger.logger import setup_logger
 from src.services.database.database import async_session
@@ -31,6 +33,12 @@ async def create_user(data: Dict[str, Any]) -> User:
 
             return user
 
+        except IntegrityError as ie:
+            logger.error(f"Ошибка при создании пользователя, {ie}")
+            await session.rollback()
+        except UniqueViolationError as violation_error:
+            logger.error(f"Ошибка при создании пользователя, {violation_error}")
+            await session.rollback()
         except Exception as e:
             logger.error(f"Ошибка при создании пользователя, {e}")
             await session.rollback()

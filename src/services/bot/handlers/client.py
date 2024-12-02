@@ -71,7 +71,6 @@ async def proccess_contract_number_or_inn(message: types.Message, state: FSMCont
 async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, data: dict, create: bool = True):
     managers = await get_managers()
 
-    await callback.message.answer("В течение 10 минут с вами свяжется первый освободившийся менеджер.")
 
     messages = []
     logger.debug(data)
@@ -80,9 +79,12 @@ async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, d
     else:
         request = await get_request(request_id=int(data["request_id"]), full_model=True)
 
+    await callback.message.answer("В течение 10 минут с вами свяжется первый освободившийся менеджер.\n\n⚠️ Вы можете описать вашу проблему в одном сообщении снизу.",
+                            reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id="no"))
+
     for i in managers:
         try:
-            if type(data["user_category"]) == list:
+            if isinstance(data["user_category"], list):
                 for user_category in data["user_category"]:
                     if i.category == user_category:
                         message = await bot.send_message(chat_id=i.user_id, text=data["message_text"],
@@ -112,9 +114,14 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
         await asyncio.sleep(60)
 
         check_request = await get_request(request_id=request.id)
-        if check_request["request_manager"] or check_request["request_status"]:
+
+        if 9 < moscow_time.hour < 19:
+            await asyncio.sleep(3600)
+            continue
+
+        if check_request["request_manager"] or check_request["request_status"] is True:
             await delete_message(messages)
-            break
+            return
 
         if interval == max_interval:
             if max_interval != 30:
@@ -126,8 +133,8 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
 
             if max_interval == 30 and interval == 30:
                 await bot.send_message(chat_id=data["user_id"], text="Вы можете связаться со своим закрепленным менеджером.")
-                break
-            break
+                return
+            return
 
         interval += 1
 
@@ -167,15 +174,15 @@ async def handle_order_request(callback: types.CallbackQuery, bot: Bot, state: F
     user_data = await state.get_data()
     contract_number_or_inn = user_data.get("contract_number_or_inn", "Не указано")
 
-    message_text = f"Пользователь {username} (Номер договора/ИНН: {contract_number_or_inn}, ID: {user_id}) отправил запрос по взаиморасчетам."
+    message_text = f"Пользователь {username} (Номер договора/ИНН: {contract_number_or_inn}, ID: {user_id}) отправил запрос по теме 'Вопрос по заявке/заказу'."
 
     data = {
         "message_text": message_text,
         "contact_number_or_inn": contract_number_or_inn,
         "user_id": user_id,
         "status": RequestCategory.ORDER,
-        "user_category": UserCategory.CLO_MANAGER,
-        "max_interval": 10,
+        "user_category": [UserCategory.CLO_MANAGER, UserCategory.SENIOR_CLO_MANAGER],
+        "max_interval": 5,
     }
 
     await _request(callback=callback, bot=bot, state=state, data=data)
@@ -191,7 +198,7 @@ async def handle_account_request(callback: types.CallbackQuery, bot: Bot, state:
     user_data = await state.get_data()
     contract_number_or_inn = user_data.get("contract_number_or_inn", "Не указано")
 
-    message_text = f"Пользователь {username} (Номер договора/ИНН: {contract_number_or_inn}, ID: {user_id}) отправил запрос по взаиморасчетам."
+    message_text = f"Пользователь {username} (Номер договора/ИНН: {contract_number_or_inn}, ID: {user_id}) отправил запрос по теме 'Вопрос по личному кабинету'."
 
     data = {
         "message_text": message_text,
@@ -214,7 +221,7 @@ async def handle_other_request(callback: types.CallbackQuery, bot: Bot, state: F
     user_data = await state.get_data()
     contract_number_or_inn = user_data.get("contract_number_or_inn", "Не указано")
 
-    message_text = f"Пользователь {username} (Номер договора/ИНН: {contract_number_or_inn}, ID: {user_id}) отправил запрос по взаиморасчетам."
+    message_text = f"Пользователь {username} (Номер договора/ИНН: {contract_number_or_inn}, ID: {user_id}) отправил запрос по теме 'Другое'."
 
     data = {
         "message_text": message_text,
@@ -237,7 +244,7 @@ async def handle_payment_request(callback: types.CallbackQuery, bot: Bot, state:
     user_data = await state.get_data()
     contract_number_or_inn = user_data.get("contract_number_or_inn", "Не указано")
 
-    message_text = f"Пользователь {username} (Номер договора/ИНН: {contract_number_or_inn}, ID: {user_id}) отправил запрос по взаиморасчетам."
+    message_text = f"Пользователь {username} (Номер договора/ИНН: {contract_number_or_inn}, ID: {user_id}) отправил запрос по теме 'Вопрос по взаиморасчётам'."
 
     data = {
         "message_text": message_text,

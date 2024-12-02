@@ -46,7 +46,8 @@ async def get_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext
     await state.set_state(RequestSend.request)
     await state.update_data(request=request, manager=True)
 
-    await callback.message.answer(f"Вы приняли запрос под номером - {request.id}.", reply_markup=answer_manager_keyboard(request_id=request.id, user_id=manager_id))
+    await callback.message.answer(f"Вы приняли запрос под номером - {request.id}.\n\n ИНН: {request.contact_number_or_inn}",
+                                  reply_markup=answer_manager_keyboard(request_id=int(request.id), user_id=manager_id))
 
 
 @clo_manager_router.callback_query(lambda query: "change_category_chat_" in query.data)
@@ -58,7 +59,8 @@ async def up_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext)
     logger.info(f"Менеджер {manager_id} - меняет категорию у запроса - {callback_data[-1]}")
 
 
-    await callback.message.answer("На какую категорию вы хотите поменять запрос:", reply_markup=change_category_kb(request_id=callback_data[-1]))
+    await callback.message.answer("На какую категорию вы хотите поменять запрос:",
+                                  reply_markup=change_category_kb(request_id=callback_data[-1]))
 
 
 

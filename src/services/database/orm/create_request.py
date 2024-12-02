@@ -45,6 +45,7 @@ async def accept_request(request_id: int, manager_id: int) -> Request | dict:
             result = await session.execute(stmt)
             request = result.scalar_one_or_none()
             manager = await get_manager(manager_id)
+
             if request.manager_id:
                 return {
                     "error": "Заказ уже принят",
@@ -57,6 +58,12 @@ async def accept_request(request_id: int, manager_id: int) -> Request | dict:
             return request
         except Exception as e:
             logger.error(f"Не удалось взять реквест - {e}")
+            session.rollback()
+            return {
+                "error": "Произошла ошибка при принятии заказа",
+                "text": str(e),
+            }
+
 
 
 async def get_request(request_id: int, full_model: bool = False) -> dict[str, Any] | None | Request:

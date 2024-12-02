@@ -16,11 +16,11 @@ async def create_managers(all_data: Dict[str, Any]) -> None:
             for user_id, data in all_data.items():
                 logger.debug(user_id, data)
                 try:
-                    # Проверка на существование записи с таким же username
-                    existing_manager = await session.execute(
-                        select(Manager).filter_by(username=user_id)
+                    stmt = select(Manager).filter_by(username=user_id)
+                    result = await session.execute(
+                        stmt
                     )
-                    existing_manager = existing_manager.scalar()
+                    existing_manager = result.scalar_one_or_none()
 
                     if existing_manager:
                         logger.debug(f"Manager with username {data.get('username', '@')} already exists. Skipping.")
@@ -29,6 +29,7 @@ async def create_managers(all_data: Dict[str, Any]) -> None:
                     manager = Manager(
                         user_id=int(user_id),
                         name=data.get('name')[0],
+                        field=data.get('field'),
                         surname=data.get('name')[-1],
                         username=user_id,
                         category=UserCategory(data.get('status')),
@@ -82,7 +83,6 @@ async def get_manager(user_id: int) -> Manager | Dict[str, Any] | None:
             result = await session.execute(stmt)
             manager = result.scalar_one_or_none()
             if manager is None:
-                logger.error("Менеджера не существует")
                 return {
                     "error": 200,
                     "text": "Not Found"
