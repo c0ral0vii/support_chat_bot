@@ -1,4 +1,4 @@
-from typing import Any, Dict, NoReturn
+from typing import Any, Dict, NoReturn, List
 
 from sqlalchemy import select
 from urllib3 import request
@@ -139,3 +139,15 @@ async def redirect_request(request_id: int, data: Dict[str, Any]) -> Dict[str, A
             logger.debug(e)
             logger.error(f"Произошла ошибка при перенаправлении - {e}")
             session.rollback()
+
+
+async def get_requests(CLO: bool = False) -> List[Request]:
+    async with async_session() as session:
+        if CLO:
+            stmt = select(Request).where(Request.request_category == RequestCategory.ORDER).order_by(Request.id.desc())
+        else:
+            stmt = select(Request).order_by(Request.id.desc())
+        result = await session.execute(stmt)
+        requests = result.scalars().all()
+
+        return requests

@@ -8,6 +8,7 @@ from src.services.bot.handlers import (
     subcategory_handler,
     messages_handler,
     rating_handler,
+    export_messages_handler,
 
     executive_director,
     senior_clo_manager,
@@ -25,6 +26,7 @@ dp.include_routers(
     subcategory_handler.subcategory_router,
     messages_handler.message_router,
     rating_handler.rating_router,
+    export_messages_handler.export_message_router,
 
     executive_director.executive_director_router,
     senior_clo_manager.senior_clo_router,

@@ -19,10 +19,10 @@ class UserCategory(str, Enum):
 
 
 class RequestCategory(str, Enum):
-    ORDER = "order"
-    PAYMENT = "payment"
-    ACCOUNT = "account"
-    OTHER = "other"
+    ORDER = "Вопрос по заявке/заказу"
+    PAYMENT = "Вопрос по взаиморасчётам"
+    ACCOUNT = "Вопрос по личному кабинету"
+    OTHER = "Другое"
 
 
 class RequestSubCategory(str, Enum):
@@ -52,7 +52,7 @@ class User(Base):
 class Manager(Base):
     __tablename__ = "managers"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     name: Mapped[str] = mapped_column(String, index=True)
     surname: Mapped[str] = mapped_column(String, index=True)

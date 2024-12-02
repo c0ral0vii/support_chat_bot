@@ -6,7 +6,7 @@ from src.services.database.database import async_session
 from src.services.database.models import Message, Request
 
 
-async def create_message(request: Request, data: Dict[str, Any]) -> Message:
+async def create_message(data: Dict[str, Any]) -> Message:
     async with async_session() as session:
         new_message = Message(
             from_=data['from'],

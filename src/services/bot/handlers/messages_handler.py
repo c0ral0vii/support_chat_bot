@@ -1,13 +1,13 @@
 from aiogram import Router, F, types, Bot
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from numpy.random import set_state
 
 from src.services.bot.fsm.messages_fsm import MessageForm
 from src.services.bot.keyboards.inline.answer_kb import answer_client_keyboard, answer_manager_keyboard
 from src.services.database.database import logger
 from src.services.database.orm.create_request import get_request
 from src.services.database.orm.managers import get_manager
+from src.services.database.orm.messages import create_message
 
 message_router = Router(name='message_router')
 
@@ -20,6 +20,8 @@ async def start_chat(callback: types.CallbackQuery, bot: Bot, state: FSMContext)
     manager = await get_manager(user_id=user_id)
     logger.debug(callback.data)
     request = await get_request(request_id=int(callback.data.split("_")[-2]), full_model=True)
+
+    await state.update_data(from_=callback.from_user.id)
 
     if isinstance(manager, dict):
         if request.close == True:
@@ -47,6 +49,11 @@ async def send_message(message: types.Message, bot: Bot, state: FSMContext):
     await state.update_data(text=message.text)
     data = await state.get_data()
 
+    await create_message(data={
+        "from": data["from_"],
+        "request_id": data["request_id"],
+        "message": data["text"],
+    })
 
     if isinstance(manager, dict):
         await bot.send_message(chat_id=data["to"], text=data["text"], reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))

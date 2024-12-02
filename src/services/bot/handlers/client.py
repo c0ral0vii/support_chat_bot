@@ -17,7 +17,7 @@ from src.services.bot.keyboards.reply import (
     executive_director_kb
 )
 from src.services.database.orm.users import create_user
-from src.services.task_control.services import TaskControlService, TASK_CONTROL_SERVICE
+from src.services.task_control.services import TASK_CONTROL_SERVICE
 
 client_router = Router(name="client")
 
