@@ -47,17 +47,17 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
             await message.answer("Вы вступили на пост 'Менеджеры по сопровождению'.")
             return
 
-    if 9 < moscow_time.hour < 19:
-        await create_user({
-            "user_id": int(message.from_user.id),
-            "username": message.from_user.username,
-        })
-        await message.answer(
-            "Добрый день, режим работы с 9:00 до 19:00 МСК!\nДля обработки запроса укажите номер договора или ИНН")
-        await state.clear()
-        await state.set_state(ClientForm.contract_number_or_inn)
-    else:
-        await message.answer("Ой, все уже ушли домой, как только вернемся на работу, обязательно вам ответим")
+    # if 9 < moscow_time.hour < 19:
+    await create_user({
+        "user_id": int(message.from_user.id),
+        "username": message.from_user.username,
+    })
+    await message.answer(
+        "Добрый день, режим работы с 9:00 до 19:00 МСК!\nДля обработки запроса укажите номер договора или ИНН")
+    await state.clear()
+    await state.set_state(ClientForm.contract_number_or_inn)
+    # else:
+    #     await message.answer("Ой, все уже ушли домой, как только вернемся на работу, обязательно вам ответим")
 
 
 
@@ -80,7 +80,7 @@ async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, d
         request = await get_request(request_id=int(data["request_id"]), full_model=True)
 
     await callback.message.answer("В течение 10 минут с вами свяжется первый освободившийся менеджер.\n\n⚠️ Вы можете описать вашу проблему в одном сообщении снизу.",
-                            reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id="no"))
+                            reply_markup=await answer_client_keyboard(request_id=int(request.id), user_id="no"))
 
     for i in managers:
         try:
