@@ -1,13 +1,12 @@
 from typing import Any, Dict, NoReturn, List
 
 from sqlalchemy import select
-from urllib3 import request
 
 from logger.logger import setup_logger
 from src.services.database.orm.users import get_user
 from src.services.database.orm.managers import get_manager
 from src.services.database.database import async_session
-from src.services.database.models import Request, User, Manager, RequestCategory, RequestSubCategory
+from src.services.database.models import Request, RequestCategory, RequestSubCategory
 
 logger = setup_logger(__name__)
 

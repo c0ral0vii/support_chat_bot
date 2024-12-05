@@ -1,7 +1,7 @@
 from aiogram import Router, F, types, Bot
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import FSInputFile
 
 from src.services.bot.fsm.messages_fsm import MessageForm
 from src.services.bot.keyboards.inline.answer_kb import answer_client_keyboard, answer_manager_keyboard
@@ -68,10 +68,19 @@ async def send_message(message: types.Message, bot: Bot, state: FSMContext):
         await state.clear()
     else:
         #пользователю
-        await bot.send_message(chat_id=data["to"], text=data["text"], reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id=data["to"]))
-        #менеджеру
-        await message.answer(f"Ваше сообщение отправлено.\n\n\nЧтобы продолжить диалог нажмите кнопку 'Отправить сообщение'", reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
-        await state.clear()
+        try:
+            await bot.send_message(chat_id=data["to"], text=data["text"], reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id=data["to"]))
+            #менеджеру
+            await message.answer(f"Ваше сообщение отправлено.\n\n\nЧтобы продолжить диалог нажмите кнопку 'Отправить сообщение'", reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
+            await state.clear()
+        except TelegramForbiddenError as te:
+            logger.warning(te)
+            await message.answer(f"❗ Произошла ошибка ❗\n\n⚠️Возможно пользователь заблокировал бота или удален, но вы можете попробовать еще раз отправить сообщение ему.", reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
+            await state.clear()
+        except Exception as e:
+            logger.warning(e)
+            await message.answer(f"❗ Произошла ошибка ❗\n\n⚠️Возможно пользователь заблокировал бота или удален, но вы можете попробовать еще раз отправить сообщение ему.", reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
+            await state.clear()
 
 
 @message_router.message(F.document, StateFilter(MessageForm.text))

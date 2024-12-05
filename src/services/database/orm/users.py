@@ -18,7 +18,7 @@ async def create_user(data: Dict[str, Any]) -> User:
             result = await session.execute(stmt)
             user = result.scalar_one_or_none()
 
-            if user:
+            if user is not None:
                 logger.info("Данный пользователь уже существует")
                 return user
 
@@ -34,13 +34,10 @@ async def create_user(data: Dict[str, Any]) -> User:
             return user
 
         except IntegrityError as ie:
-            logger.error(f"Ошибка при создании пользователя, {ie}")
             await session.rollback()
         except UniqueViolationError as violation_error:
-            logger.error(f"Ошибка при создании пользователя, {violation_error}")
             await session.rollback()
         except Exception as e:
-            logger.error(f"Ошибка при создании пользователя, {e}")
             await session.rollback()
 
 

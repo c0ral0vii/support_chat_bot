@@ -7,4 +7,4 @@ RUN pip install -r ./requirements.txt
 
 WORKDIR /app
 
-CMD ["sh", "-c", "alembic upgrade head && python main.py"]
+CMD ["sh", "-c", "python main.py"]

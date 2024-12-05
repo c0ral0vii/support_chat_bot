@@ -1,10 +1,10 @@
 import asyncio
-import time
 
-from aiogram import Bot, Router, types, F
+from aiogram import Bot, Router, types
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import CommandStart, StateFilter
-from aiogram.exceptions import TelegramBadRequest
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
+
 from logger.logger import setup_logger
 from src.services.database.models import UserCategory, RequestCategory, Request, Manager
 from src.services.bot.fsm.client_fsm import ClientForm
@@ -24,8 +24,12 @@ import datetime
 client_router = Router(name="client")
 
 logger = setup_logger(__name__)
-moscow_tz = pytz.timezone('Europe/Moscow')
-moscow_time = datetime.datetime.now(moscow_tz)
+
+
+async def get_time():
+    moscow_tz = pytz.timezone('Europe/Moscow')
+    moscow_time = datetime.datetime.now(moscow_tz)
+    return moscow_time
 
 
 @client_router.message(CommandStart())
@@ -47,11 +51,8 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
             await message.answer("Вы вступили на пост 'Менеджеры по сопровождению'.")
             return
 
+    # moscow_time = await get_time()
     # if 9 < moscow_time.hour < 19:
-    await create_user({
-        "user_id": int(message.from_user.id),
-        "username": message.from_user.username,
-    })
     await message.answer(
         "Добрый день, режим работы с 9:00 до 19:00 МСК!\nДля обработки запроса укажите номер договора или ИНН")
     await state.clear()
@@ -64,7 +65,10 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
 @client_router.message(ClientForm.contract_number_or_inn)
 async def proccess_contract_number_or_inn(message: types.Message, state: FSMContext) -> None:
     await state.update_data(contract_number_or_inn=message.text)
-
+    await create_user({
+        "user_id": int(message.from_user.id),
+        "username": message.from_user.username,
+    })
     await message.answer("Выберите, пожалуйста, категорию вашего запроса:", reply_markup=request_categories_keyboard())
 
 
@@ -99,6 +103,13 @@ async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, d
         except TelegramBadRequest as e:
             logger.warning(e)
             continue
+        except TelegramForbiddenError as te:
+            logger.warning(te)
+            continue
+        except Exception as e:
+            logger.warning(e)
+            continue
+
     logger.debug("разослали все сообщения")
 
 
@@ -112,10 +123,12 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
     interval = 0
     while True:
         await asyncio.sleep(60)
+        interval += 1
 
         check_request = await get_request(request_id=request.id)
+        time = await get_time()
 
-        if 9 < moscow_time.hour < 19:
+        if 9 < time.hour < 19:
             await asyncio.sleep(3600)
             continue
 
@@ -123,20 +136,18 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
             await delete_message(messages)
             return
 
-        if interval == max_interval:
-            if max_interval != 30:
-                data["max_interval"] = 30
-                new_message = f"!!->Просрочен---{data["message_text"]}---Просрочен<-!!"
-                data["message_text"] = new_message
-                data["user_category"] = [UserCategory.SENIOR_CLO_MANAGER, UserCategory.ACCOUNT_MANAGER]
-                asyncio.create_task(_create_notification(messages, bot, data, managers, request, max_interval))
+        if interval == max_interval and max_interval != 30:
+            data["max_interval"] = 30
+            new_message = f"!!->Просрочен---{data["message_text"]}---Просрочен<-!!"
+            data["message_text"] = new_message
+            data["user_category"] = [UserCategory.SENIOR_CLO_MANAGER, UserCategory.CLO_MANAGER, UserCategory.ACCOUNT_MANAGER]
+            asyncio.create_task(_create_notification(messages, bot, data, managers, request, max_interval))
 
             if max_interval == 30 and interval == 30:
                 await bot.send_message(chat_id=data["user_id"], text="Вы можете связаться со своим закрепленным менеджером.")
                 return
             return
 
-        interval += 1
 
         for i in managers:
             try:
@@ -147,13 +158,20 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
                                                          reply_markup=answer_keyboard(request_id=request.id))
                         messages.append(message)
 
-
-                if type(data["user_category"]) == list:
+                skip_user_id = {}
+                if isinstance(data["user_category"], list):
                     for user_category in data["user_category"]:
-                        if i.category == user_category:
-                            message = await bot.send_message(chat_id=i.user_id, text=data["message_text"],
-                                                             reply_markup=answer_keyboard(request_id=request.id))
-                            messages.append(message)
+                        try:
+                            if i.category == user_category and i.user_id not in skip_user_id:
+                                message = await bot.send_message(chat_id=i.user_id, text=data["message_text"],
+                                                                 reply_markup=answer_keyboard(request_id=request.id))
+                                messages.append(message)
+
+                        except TelegramBadRequest as e:
+                            logger.warning(e)
+                            skip_user_id[i.user_id] = str(e)
+                            continue
+
             except Exception as e:
                 logger.warning(e)
                 continue
@@ -237,6 +255,10 @@ async def handle_other_request(callback: types.CallbackQuery, bot: Bot, state: F
 @client_router.callback_query(lambda c: c.data == "payment_request", StateFilter(ClientForm))
 async def handle_payment_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext):
     await callback.message.delete()
+    managers = await get_managers()
+    for i in managers:
+        if i.category == UserCategory.EXECUTIVE_DIRECTOR and i.vacation_start < datetime.datetime.now() < i.vacation_end:
+            await callback.message.answer(f"Нахожусь в отпуске с {i.vacation_start[0:9]} по {i.vacation_end[0:9]}, по вопросам взаиморасчетов свяжитесь, пожалуйста, с Юлией по тел. {i.number}.")
 
     user_id = callback.from_user.id
     username = callback.from_user.username or "Неизвестный пользователь"
@@ -255,8 +277,3 @@ async def handle_payment_request(callback: types.CallbackQuery, bot: Bot, state:
     }
 
     await _request(callback=callback, bot=bot, state=state, data=data)
-
-
-
-
-

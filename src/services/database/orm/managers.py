@@ -1,14 +1,15 @@
+from datetime import datetime
 from os.path import split
 from typing import Any, Dict, List, Optional
 from logger.logger import setup_logger
 from src.services.database.database import async_session
 from src.services.database.models import Manager, UserCategory, Request, User, Message, Rating
-from sqlalchemy import delete, select, or_
+from sqlalchemy import delete, select, or_, and_
+from sqlalchemy.exc import IntegrityError
+
 
 logger = setup_logger(__name__)
 
-
-from sqlalchemy.exc import IntegrityError
 
 async def create_managers(all_data: Dict[str, Any]) -> None:
     async with async_session() as session:
@@ -16,13 +17,19 @@ async def create_managers(all_data: Dict[str, Any]) -> None:
             for user_id, data in all_data.items():
                 logger.debug(user_id, data)
                 try:
-                    stmt = select(Manager).filter_by(username=user_id)
+                    stmt = select(Manager).where(or_(
+                        Manager.username == user_id,
+                        and_(Manager.surname == data['name'][-1], Manager.name == data['name'][0])
+                    ))
+
                     result = await session.execute(
                         stmt
                     )
                     existing_manager = result.scalar_one_or_none()
 
                     if existing_manager:
+                        existing_manager.user_id = int(user_id)
+                        existing_manager.username = user_id
                         logger.debug(f"Manager with username {data.get('username', '@')} already exists. Skipping.")
                         continue
 
@@ -92,3 +99,31 @@ async def get_manager(user_id: int) -> Manager | Dict[str, Any] | None:
         except Exception as e:
             await session.rollback()
             return None
+
+
+async def set_vacation(user_id: int, data: Dict[str, Any], **kwargs):
+    manager = await get_manager(user_id=user_id)
+    async with async_session() as session:
+        try:
+            manager.vacation_start = datetime.strptime(data["from_"], "%d.%m.%Y")
+            manager.vacation_end = datetime.strptime(data["to_"], "%d.%m.%Y")
+            manager.number = str(data.get("phone", 'XX'))
+
+            session.add(manager)
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+
+
+async def disable_vacation(user_id: int):
+    manager = await get_manager(user_id=user_id)
+    async with async_session() as session:
+        try:
+            manager.vacation_start = None
+            manager.vacation_end = None
+            manager.number = None
+
+            session.add(manager)
+            await session.commit()
+        except Exception as e:
+            await session.rollback()

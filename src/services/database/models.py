@@ -11,6 +11,7 @@ class Base(DeclarativeBase):
     updated: Mapped[DateTime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
 
 
+
 class UserCategory(str, Enum):
     EXECUTIVE_DIRECTOR = "executive_director"
     ACCOUNT_MANAGER = "account_manager"
@@ -34,7 +35,7 @@ class RequestSubCategory(str, Enum):
     CARGO_SEARCH = "Поиск груза"
     CONSULTATION_ON_TS_AND_DELIVERY = "Консультация по ТС и срокам доставки"
     PROVIDE_DOCUMENTS = "Предоставление документов, подтверждающих доставку/отправку"
-    CUSTOM_SUBCATEGORY = "Свой вариант подкатегории запроса"
+    CUSTOM_SUBCATEGORY = "Свой вариант подкатегории запроса (возможность написать)"
 
     NOT_SETUP = "Не установлено / Заказ не закрыт"
 
@@ -61,6 +62,10 @@ class Manager(Base):
     category: Mapped[UserCategory] = mapped_column(SqlEnum(UserCategory, name="category"), nullable=False)
     free: Mapped[bool] = mapped_column(Boolean, default=True)
 
+    vacation_start: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    vacation_end: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    number: Mapped[str] = mapped_column(String, nullable=True)
+
     requests: Mapped[list["Request"]] = relationship("Request", back_populates="manager")
 
 
@@ -73,6 +78,8 @@ class Request(Base):
     request_category: Mapped[RequestCategory] = mapped_column(SqlEnum(RequestCategory, name="request_category"))
     subcategory: Mapped[RequestSubCategory] = mapped_column(SqlEnum(RequestSubCategory, name="subcategory"),
                                                             default=RequestSubCategory.NOT_SETUP)
+
+    manager_closed: Mapped[int] = mapped_column(BigInteger, nullable=True)
 
     close: Mapped[bool] = mapped_column(Boolean, default=False)
     contact_number_or_inn: Mapped[str] = mapped_column(String, nullable=True)

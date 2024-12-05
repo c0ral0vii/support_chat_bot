@@ -35,7 +35,7 @@ async def get_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext
 
     request = await accept_request(request_id=data["request_id"], manager_id=data["manager_id"])
 
-    if type(request) == dict:
+    if isinstance(request, dict):
         await callback.message.answer(f"Заказ уже был принят")
         return
 
@@ -57,7 +57,10 @@ async def up_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext)
     manager_id = callback.from_user.id
     callback_data = callback.data.split("_")
     logger.info(f"Менеджер {manager_id} - меняет категорию у запроса - {callback_data[-1]}")
-
+    request_model = await get_data_request(request_id=int(callback_data[-1]), full_model=True)
+    if request_model.close:
+        await callback.message.answer("Заявка закрыта.")
+        return
 
     await callback.message.answer("На какую категорию вы хотите поменять запрос:",
                                   reply_markup=change_category_kb(request_id=callback_data[-1]))
@@ -69,6 +72,11 @@ async def change_category(callback: types.CallbackQuery, bot: Bot, state: FSMCon
     callback_data = callback.data.split("_")
     to_category = None
     status = None
+    request_model = await get_data_request(request_id=int(callback_data[-1]), full_model=True)
+
+    if request_model.close:
+        await callback.message.answer("Заявка закрыта.")
+        return
 
     if callback_data[-2] == "clo":
         to_category = UserCategory.CLO_MANAGER
@@ -82,7 +90,6 @@ async def change_category(callback: types.CallbackQuery, bot: Bot, state: FSMCon
         to_category = UserCategory.ACCOUNT_MANAGER
         status = RequestCategory.ACCOUNT
 
-    request_model = await get_data_request(request_id=int(callback_data[-1]), full_model=True)
     message_text = f"На вас перенаправлен запрос -> {request_model.id} <-> (Номер договора/ИНН: {request_model.contact_number_or_inn}, ID: {request_model.user_id}) отправил запрос по взаиморасчетам."
 
     if status is None or to_category is None:
