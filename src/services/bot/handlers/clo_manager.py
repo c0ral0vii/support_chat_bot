@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Router, F, types, Bot
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
@@ -9,9 +11,11 @@ from src.services.bot.keyboards.inline.rating_client import create_rating
 from src.services.bot.keyboards.inline.subcategory_manager import get_subcategory_markup
 from src.services.database.orm.create_request import accept_request, close_request_status, \
     get_request as get_data_request, redirect_request
-from src.services.database.models import RequestCategory, UserCategory
+from src.services.database.models import RequestCategory, UserCategory, RequestSubCategory
 from src.services.bot.keyboards.inline.answer_kb import answer_manager_keyboard
 from src.services.bot.fsm.client_fsm import RequestSend
+from src.services.database.orm.managers import get_manager
+from src.services.statistic.services import StatisticService
 from src.services.task_control.services import TaskControlService, TASK_CONTROL_SERVICE
 
 clo_manager_router = Router(name='clo_manager')
@@ -132,6 +136,8 @@ async def close_request(callback: types.CallbackQuery, bot: Bot, state: FSMConte
     }
 
     close_status = await close_request_status(request_id=data.get("request_id"))
+
+
 
     if close_status["status"] == 200:
         await callback.message.answer(f"Запрос - {data["request_id"]} закрыт выберете, подкатегорию: ", reply_markup=get_subcategory_markup(request_id=data["request_id"]))

@@ -1,7 +1,6 @@
 import asyncio
 from aiogram import Bot, Dispatcher, types
 
-from src.services.bot.handlers.vacation_handler import vacation_router
 from src.services.config.config import settings
 from src.services.bot.handlers import (
     client,
@@ -17,7 +16,6 @@ from src.services.bot.handlers import (
 )
 
 from src.services.update_managers.service import UpdateManagerService
-from src.services.statistic.services import stats_service
 
 bot = Bot(token=settings.get_bot_token)
 dp = Dispatcher()
@@ -44,7 +42,6 @@ async def on_startup():
 
 
 async def main():
-    await stats_service.start()
     update_manager = UpdateManagerService()
     asyncio.create_task(update_manager.start())
     await bot.delete_webhook(drop_pending_updates=True)

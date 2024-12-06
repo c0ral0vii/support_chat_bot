@@ -1,7 +1,11 @@
+import asyncio
+
 from aiogram import types, Router, F
 
 from src.services.database.models import RequestSubCategory
-from src.services.database.orm.create_request import change_subcategory
+from src.services.database.orm.create_request import change_subcategory, get_request
+from src.services.database.orm.managers import get_manager
+from src.services.statistic.services import StatisticService
 
 subcategory_router = Router(name='subcategory_router')
 
@@ -36,6 +40,14 @@ async def create_subcategory(callback: types.CallbackQuery):
         subcategory = RequestSubCategory.PROVIDE_DOCUMENTS
 
     await callback.message.edit_text("Подкатегория выбрана, заказ закрыт!")
+
+    manager = await get_manager(user_id=int(callback.from_user.id))
+    request_model = await get_request(request_id=int(subcategory_data[-1]), full_model=True)
+
+    stats = asyncio.create_task(StatisticService().start(
+        field=str(manager.field),
+        subcategory=subcategory,
+    ))
 
     await change_subcategory(request_id=int(subcategory_data[-1]), subcategory=subcategory)
 

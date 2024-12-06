@@ -1,9 +1,13 @@
 import asyncio
 import datetime
+from typing import Dict, Any
+
 import gspread
 from google.oauth2.credentials import Credentials
 from logger.logger import setup_logger
 from src.services.config.config import settings
+from src.services.database.models import RequestSubCategory
+
 
 class StatisticService:
     def __init__(self, logger=setup_logger(__name__)):
@@ -43,14 +47,24 @@ class StatisticService:
 
         self.client = None
         self._conn = False
+        self.error = 0
 
-    async def start(self):
+    async def start(self, field: str, subcategory: RequestSubCategory) -> None | Dict[str, Any]:
         try:
             await self._connect()
-            await self._set_update()
+            await self._set_update(field=field,subcategory=subcategory)
         except Exception as e:
+            if self.error == 2:
+                return {
+                    "status": 400,
+                    "error": str(e),
+                    "text": "Не удалось записать в статистику",
+                }
+
             self.logger.error(e)
+            self.error += 1
             await asyncio.sleep(self.timeout[1])
+            await self.start(field, subcategory)
 
     async def _connect(self):
         try:
@@ -71,7 +85,7 @@ class StatisticService:
             "day": today,
         }
 
-    async def _set_update(self):
+    async def _set_update(self, field: str, subcategory: RequestSubCategory):
         if not self._conn:
             self.logger.debug(self._conn)
             return {
@@ -83,7 +97,7 @@ class StatisticService:
         try:
             sheet = self.client.open_by_key(self.SPREADSHEET_ID)
             today_month = await self._get_month()
-            worksheet = sheet.worksheet("менеджер 11")
+            worksheet = sheet.worksheet(field)
             range_name = self.data_in_google.get(today_month['date_number'])
 
             values_list = worksheet.batch_get([range_name])[0]
@@ -93,7 +107,9 @@ class StatisticService:
             # Найти строку, соответствующую текущему месяцу
             month_row_index = None
             for i, row in enumerate(values_list):
-                if row[0].lower() == f"менеджер 11/ {today_month['date'].lower()}":
+                self.logger.debug(row[0].split('/')[-1].strip())
+                self.logger.debug(today_month['date'].lower())
+                if row[0].split('/')[-1].strip() == today_month['date'].lower():
                     month_row_index = i + int(range_name.split(":")[0].replace("A", ""))  # +1, потому что индексы в Google Sheets начинаются с 1
                     break
 
@@ -105,18 +121,17 @@ class StatisticService:
 
             # Найти строку, соответствующую нужной категории
             category_row_index = None
-            category_name = "Создание накладной/заявки"  # Замените на нужную категорию
             for i, row in enumerate(values_list):
-                if row[0].strip().lower() == category_name.lower():
+                if row[0].strip().lower() == subcategory.value.lower():
                     self.logger.debug(i)
                     category_row_index = i + int(range_name.split(":")[0].replace("A", ""))  # +1, потому что индексы в Google Sheets начинаются с 1
                     break
 
             if category_row_index is None:
-                self.logger.error(f"Строка для категории {category_name} не найдена")
+                self.logger.error(f"Строка для категории {subcategory} не найдена")
                 return
 
-            self.logger.debug(f"Найдена строка для категории {category_name} на позиции {category_row_index}")
+            self.logger.debug(f"Найдена строка для категории {subcategory} на позиции {category_row_index}")
 
             # Обновить значение в нужной ячейке
             day_column_index = today_month['day'] + 2  # +2, потому что первые две колонки - это заголовок и "Итого"
@@ -124,9 +139,7 @@ class StatisticService:
             new_value = int(current_value) + 1 if current_value else 1
             worksheet.update_cell(category_row_index, day_column_index, new_value)
 
-            self.logger.debug(f"Обновлено значение для категории {category_name}, день {today_month['day']}: {new_value}")
+            self.logger.debug(f"Обновлено значение для категории {subcategory}, день {today_month['day']}: {new_value}")
 
         except Exception as e:
             self.logger.error(e)
-
-stats_service = StatisticService()
