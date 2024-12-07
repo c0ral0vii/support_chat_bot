@@ -57,5 +57,6 @@ async def get_managers():
             if len(row[-1]) > 2:
                 managers[user_id] = {"status": status, "name": name, "field": field}
         return managers
+
     except HttpError as error:
         print(error)

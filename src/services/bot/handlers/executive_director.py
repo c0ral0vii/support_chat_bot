@@ -25,7 +25,7 @@ async def get_all_requests(message: types.Message, bot: Bot, state: FSMContext):
     if manager.category == UserCategory.SENIOR_CLO_MANAGER:
         requests = await get_requests(CLO=True)
         await state.update_data(clo=True)
-    if manager.category == UserCategory.EXECUTIVE_DIRECTOR:
+    if manager.category in [UserCategory.EXECUTIVE_DIRECTOR, UserCategory.ACCOUNT_MANAGER]:
         requests = await get_requests()
 
     chunks = list(chunked(requests, 5))
@@ -92,8 +92,3 @@ async def to_left(callback: types.CallbackQuery, bot: Bot, state: FSMContext):
     page -= 1
     await state.update_data(page=page)
     await callback.message.edit_text(text="Все заявки:", reply_markup=await pagination_kb(page=page, max_page=max_pages, list_requests=pages[page-1]))
-
-
-@executive_director_router.message(F.text == 'Установить автоответ')
-async def set_auto_answer(message: types.Message, bot: Bot, state: FSMContext):
-    ...
