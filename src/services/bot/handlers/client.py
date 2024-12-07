@@ -148,17 +148,27 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
                 return
             return
 
-
+        skip_user_id = {}
         for i in managers:
             try:
                 logger.debug(interval)
                 if not data["user_category"] is None:
-                    if i.category == data['user_category'] and i.free:
-                        message = await bot.send_message(chat_id=i.user_id, text=data["message_text"],
-                                                         reply_markup=answer_keyboard(request_id=request.id))
-                        messages.append(message)
+                    try:
+                        if i.category == data['user_category'] and i.free:
+                            message = await bot.send_message(chat_id=i.user_id, text=data["message_text"],
+                                                             reply_markup=answer_keyboard(request_id=request.id))
+                            messages.append(message)
 
-                skip_user_id = {}
+                    except TelegramBadRequest as e:
+                        logger.warning(e)
+                        continue
+                    except TelegramForbiddenError as te:
+                        logger.warning(te)
+                        continue
+                    except Exception as e:
+                        logger.warning(e)
+                        continue
+
                 if isinstance(data["user_category"], list):
                     for user_category in data["user_category"]:
                         try:
