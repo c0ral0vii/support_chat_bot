@@ -28,10 +28,11 @@ async def get_all_requests(message: types.Message, bot: Bot, state: FSMContext):
     if manager.category in [UserCategory.EXECUTIVE_DIRECTOR, UserCategory.ACCOUNT_MANAGER]:
         requests = await get_requests()
 
-    if len(requests) == 0:
+    try:        
+        chunks = list(chunked(requests, 5))
+    except:
         await message.answer("У нас пока нет заявок")
-    chunks = list(chunked(requests, 5))
-
+        
     await state.update_data(page=1, max_pages=len(chunks), pages=chunks)
 
     logger.debug(requests)
