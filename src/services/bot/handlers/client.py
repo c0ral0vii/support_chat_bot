@@ -138,15 +138,13 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
 
         if interval == max_interval and max_interval != 30:
             data["max_interval"] = 30
-            new_message = f"!!->Просрочен---{data["message_text"]}---Просрочен<-!!"
-            data["message_text"] = new_message
+            data["message_text"] = f"!!->Просрочен---{data['message_text']}---Просрочен<-!!"
             data["user_category"] = [UserCategory.SENIOR_CLO_MANAGER, UserCategory.CLO_MANAGER, UserCategory.ACCOUNT_MANAGER]
-            asyncio.create_task(_create_notification(messages, bot, data, managers, request, max_interval))
 
-            if max_interval == 30 and interval == 30:
-                await bot.send_message(chat_id=data["user_id"], text="Вы можете связаться со своим закрепленным менеджером.")
-                return
+        if max_interval == 30 and interval == 30:
+            await bot.send_message(chat_id=data["user_id"], text="Вы можете связаться со своим закрепленным менеджером.")
             return
+            
 
         skip_user_id = {}
         for i in managers:
