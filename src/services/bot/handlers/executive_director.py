@@ -32,7 +32,8 @@ async def get_all_requests(message: types.Message, bot: Bot, state: FSMContext):
         chunks = list(chunked(requests, 5))
     except:
         await message.answer("У нас пока нет заявок")
-        
+        return
+    
     await state.update_data(page=1, max_pages=len(chunks), pages=chunks)
 
     logger.debug(requests)
