@@ -136,7 +136,7 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
             await delete_message(messages)
             return
 
-        if interval == max_interval and max_interval != 30:
+        if interval >= 5:
             data["max_interval"] = 30
             data["message_text"] = f"!!->Просрочен---{data['message_text']}---Просрочен<-!!"
             data["user_category"] = [UserCategory.SENIOR_CLO_MANAGER, UserCategory.CLO_MANAGER, UserCategory.ACCOUNT_MANAGER]
@@ -192,7 +192,10 @@ async def _create_notification(messages: list[types.Message], bot: Bot, data: di
 
 async def delete_message(messages):
     for message in messages:
-        await message.delete()
+        try:
+            await message.delete()
+        except:
+            continue
 
 
 @client_router.callback_query(lambda c: c.data == "order_request", StateFilter(ClientForm))

@@ -1,12 +1,13 @@
 from typing import Any, Dict, NoReturn, List
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from logger.logger import setup_logger
 from src.services.database.orm.users import get_user
 from src.services.database.orm.managers import get_manager
 from src.services.database.database import async_session
-from src.services.database.models import Request, RequestCategory, RequestSubCategory
+from src.services.database.models import Request, RequestCategory, RequestSubCategory, Rating
 
 logger = setup_logger(__name__)
 
@@ -65,15 +66,16 @@ async def accept_request(request_id: int, manager_id: int) -> Request | dict:
 
 
 
-async def get_request(request_id: int, full_model: bool = False) -> dict[str, Any] | None | Request:
+async def get_request(request_id: int, full_model: bool = False, with_request: bool = False) -> dict[str, Any] | None | Request:
     async with async_session() as session:
         stmt = select(Request).where(Request.id == request_id)
         result = await session.execute(stmt)
         request = result.scalar_one_or_none()
-
         if not request:
             return None
 
+        if with_request:
+            stmt = select(Rating).where()
         if full_model:
             return request
 

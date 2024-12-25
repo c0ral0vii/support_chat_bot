@@ -34,7 +34,7 @@ async def get_all_requests(message: types.Message, bot: Bot, state: FSMContext):
         await message.answer("У нас пока нет заявок")
         return
     
-    await state.update_data(page=1, max_pages=len(chunks), pages=chunks)
+    await state.update_data(page=1, max_pages=len(chunks), pagesll=chunks)
 
     logger.debug(requests)
     await message.answer('Все заявки:', reply_markup=await pagination_kb(page=1, list_requests=chunks[0], max_page=len(chunks)))
