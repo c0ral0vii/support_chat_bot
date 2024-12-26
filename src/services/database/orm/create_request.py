@@ -68,9 +68,10 @@ async def accept_request(request_id: int, manager_id: int) -> Request | dict:
 
 async def get_request(request_id: int, full_model: bool = False, with_request: bool = False) -> dict[str, Any] | None | Request:
     async with async_session() as session:
-        stmt = select(Request).where(Request.id == request_id)
+        stmt = select(Request).options(selectinload(Request.ratings)).where(Request.id == request_id)
         result = await session.execute(stmt)
-        request = result.scalar_one_or_none()
+        request = result.unique().scalar_one_or_none()
+
         if not request:
             return None
 

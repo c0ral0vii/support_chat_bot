@@ -34,18 +34,23 @@ async def get_all_requests(message: types.Message, bot: Bot, state: FSMContext):
         await message.answer("У нас пока нет заявок")
         return
     
-    await state.update_data(page=1, max_pages=len(chunks), pagesll=chunks)
+    await state.update_data(page=1, max_pages=len(chunks), pages=chunks)
 
     logger.debug(requests)
-    await message.answer('Все заявки:', reply_markup=await pagination_kb(page=1, list_requests=chunks[0], max_page=len(chunks)))
-
+    try:
+        await message.answer('Все заявки:', reply_markup=await pagination_kb(page=1, list_requests=chunks[0], max_page=len(chunks)))
+    except:
+        await message.answer("У нас пока нет заявок")
+        return
 
 @executive_director_router.callback_query(lambda c: "detail_" in c.data)
 async def detail(callback: types.CallbackQuery, state: FSMContext):
     data = callback.data.split("_")[-1]
     request_data = await get_request(request_id=int(data), full_model=True)
-
-    await callback.message.answer(f"Запрос - {request_data.id}:\nЗакрыт: {"✅" if request_data.close else '❌'}\nИНН: {request_data.contact_number_or_inn}\nМенеджер принявший: {request_data.manager_id}\nПользователь: {request_data.user_id}\nКатегория: {request_data.request_category.value}\nПодкатегория: {request_data.subcategory.value}\n\nСоздан: {request_data.created}\nПоследнее обновление: {request_data.updated}",
+    score = [
+        {"rating_id": rating.id, "score": rating.rating_value} for rating in request_data.ratings
+    ]
+    await callback.message.answer(f"Запрос - {request_data.id}:\nЗакрыт: {"✅" if request_data.close else '❌'}\nИНН: {request_data.contact_number_or_inn}\nМенеджер принявший: {request_data.manager_id}\nПользователь: {request_data.user_id}\nКатегория: {request_data.request_category.value}\nПодкатегория: {request_data.subcategory.value}\nОценка: {score[0]['score'] if score else 'Нет оценки'}\n\nСоздан: {request_data.created}\nПоследнее обновление: {request_data.updated}",
                                   reply_markup=await detail_request(request_id=int(request_data.id)))
 
 
