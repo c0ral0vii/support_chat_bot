@@ -128,6 +128,7 @@ from typing import List, Dict
 async def _create_notification(messages: List[types.Message], bot: Bot, data: Dict, managers: List, request: Request, max_interval: int = 999) -> None:
     interval = 0
     data["_a"] = False
+    data["send"] = False
 
     while True:
         try:
@@ -157,10 +158,11 @@ async def _create_notification(messages: List[types.Message], bot: Bot, data: Di
                 logger.debug("Тута")
                 await delete_message(messages)
                 return
+
             logger.debug("3")
 
             # Обработка просроченных запросов
-            if interval >= 5 and data.get("status") == RequestCategory.ORDER:
+            if interval >= 5 and data.get("status") == RequestCategory.ORDER and data["send"] is False:
                 logger.debug(f"Просрочено, {data}")
                 data["max_interval"] = 30
 
@@ -169,6 +171,33 @@ async def _create_notification(messages: List[types.Message], bot: Bot, data: Di
                 data["_a"] = True
 
                 data["user_category"] = [UserCategory.ACCOUNT_MANAGER]
+                for i in managers:
+                    try:
+                        if not data["user_category"]:
+                            continue
+
+                        # Если user_category — это список
+                        if isinstance(data["user_category"], list):
+                            for user_category in data["user_category"]:
+                                try:
+                                    if i.category == user_category and i.user_id not in skip_user_id and i.free:
+                                        message = await bot.send_message(
+                                            chat_id=i.user_id,
+                                            text=data["message_text"],
+                                            reply_markup=answer_keyboard(request_id=request.id)
+                                        )
+                                        messages.append(message)
+                                except (TelegramBadRequest, TelegramForbiddenError) as e:
+                                    logger.warning(f"Ошибка отправки сообщения пользователю {i.user_id}: {e}")
+                                    skip_user_id.add(i.user_id)  # Добавляем ID пользователя в множество skip_user_id
+                                except Exception as e:
+                                    logger.warning(f"Неизвестная ошибка: {e}")
+                                    continue
+                    except Exception as e:
+                        logger.error(f"Критическая ошибка в цикле: {e}")
+                        continue
+                data["send"] = True
+
             logger.debug("3")
 
             # Уведомление пользователя при достижении максимального интервала
@@ -177,6 +206,7 @@ async def _create_notification(messages: List[types.Message], bot: Bot, data: Di
 
                 await bot.send_message(chat_id=data["user_id"], text="Вы можете связаться со своим закрепленным менеджером.")
                 return
+
             logger.debug("4")
 
             # Отправка сообщений менеджерам
