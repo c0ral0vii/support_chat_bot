@@ -163,6 +163,8 @@ async def _create_notification(messages: List[types.Message], bot: Bot, data: Di
 
             # Обработка просроченных запросов
             if interval >= 5 and data.get("status") == RequestCategory.ORDER and data["send"] is False:
+                data["send"] = True
+
                 logger.debug(f"Просрочено, {data}")
                 data["max_interval"] = 30
 
@@ -196,7 +198,7 @@ async def _create_notification(messages: List[types.Message], bot: Bot, data: Di
                     except Exception as e:
                         logger.error(f"Критическая ошибка в цикле: {e}")
                         continue
-                data["send"] = True
+                return
 
             logger.debug("3")
 
@@ -285,7 +287,7 @@ async def handle_order_request(callback: types.CallbackQuery, bot: Bot, state: F
         "contact_number_or_inn": contract_number_or_inn,
         "user_id": user_id,
         "status": RequestCategory.ORDER,
-        "user_category": [UserCategory.CLO_MANAGER],
+        "user_category": [UserCategory.CLO_MANAGER, UserCategory.SENIOR_CLO_MANAGER],
     }
 
     await _request(callback=callback, bot=bot, state=state, data=data)

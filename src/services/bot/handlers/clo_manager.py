@@ -114,7 +114,6 @@ async def change_category(callback: types.CallbackQuery, bot: Bot, state: FSMCon
         await callback.message.delete()
         output = await redirect_request(request_id=int(callback_data[-1]), data=data)
 
-
         await _request(callback=callback, bot=bot, state=state, data=data, create=False)
         await state.clear()
         await callback.message.answer("Запрос перенаправлен")
@@ -135,7 +134,7 @@ async def close_request(callback: types.CallbackQuery, bot: Bot, state: FSMConte
         "request_id": int(callback_data[-1]),
     }
 
-    close_status = await close_request_status(request_id=data.get("request_id"))
+    close_status = await close_request_status(request_id=data.get("request_id"), only_user=True, user_id=manager_id)
 
 
 
@@ -143,7 +142,8 @@ async def close_request(callback: types.CallbackQuery, bot: Bot, state: FSMConte
         await callback.message.answer(f"Запрос - {data["request_id"]} закрыт выберете, подкатегорию: ", reply_markup=get_subcategory_markup(request_id=data["request_id"]))
 
         await _close_request(request_id=data["request_id"], bot=bot)
-
+    else:
+        await callback.message.answer("Заказ может закрыть только менеджер отвечающий за него")
     await state.clear()
 
 

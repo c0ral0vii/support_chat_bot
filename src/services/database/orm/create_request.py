@@ -89,7 +89,7 @@ async def get_request(request_id: int, full_model: bool = False, with_request: b
         }
 
 
-async def close_request_status(request_id: int) -> dict:
+async def close_request_status(request_id: int, only_user=True, user_id: int = None) -> dict:
     async with async_session() as session:
         stmt = select(Request).where(Request.id == request_id)
         result = await session.execute(stmt)
@@ -99,6 +99,12 @@ async def close_request_status(request_id: int) -> dict:
             return {
                 "status": 404,
             }
+        if only_user:
+            if request.manager_id != user_id:
+                return {
+                    "status": 203,
+                    "message": "Нет прав на закрытие заказа",
+                }
 
         request.close = True
 
