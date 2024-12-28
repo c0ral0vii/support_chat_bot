@@ -45,12 +45,13 @@ async def create_subcategory(callback: types.CallbackQuery):
     await callback.message.edit_text("Подкатегория выбрана, заказ закрыт!")
 
     manager = await get_manager(user_id=int(callback.from_user.id))
-    request_model = await get_request(request_id=int(subcategory_data[-1]), full_model=True)
+    # request_model = await get_request(request_id=int(subcategory_data[-1]), full_model=True)
 
-    stats = asyncio.create_task(StatisticService().start(
-        field=str(manager.field),
-        subcategory=subcategory,
-    ))
+    if subcategory_data[1] != "10":
+        stats = asyncio.create_task(StatisticService().start(
+            field=str(manager.field),
+            subcategory=subcategory,
+        ))
 
     await change_subcategory(request_id=int(subcategory_data[-1]), subcategory=subcategory)
 
