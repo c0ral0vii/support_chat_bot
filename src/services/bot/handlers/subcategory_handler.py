@@ -18,26 +18,29 @@ async def create_subcategory(callback: types.CallbackQuery):
     if subcategory_data[1] == "1":
         subcategory = RequestSubCategory.RESET_NP_AND_CHANGE_PAYER
 
-    if subcategory_data[1] == "2":
+    elif subcategory_data[1] == "2":
         subcategory = RequestSubCategory.CREATE_INVOICE_OR_REQUEST
 
-    if subcategory_data[1] == "3":
+    elif subcategory_data[1] == "3":
         subcategory = RequestSubCategory.CHANGE_RECIPIENT_CONTACTS
 
-    if subcategory_data[1] == "4":
+    elif subcategory_data[1] == "4":
         subcategory = RequestSubCategory.CHANGE_DELIVERY_MODE_OR_PICKUP
 
-    if subcategory_data[1] == "5":
+    elif subcategory_data[1] == "5":
         subcategory = RequestSubCategory.ORDER_FORWARDING
 
-    if subcategory_data[1] == "6":
+    elif subcategory_data[1] == "6":
         subcategory = RequestSubCategory.CARGO_SEARCH
 
-    if subcategory_data[1] == "7":
+    elif subcategory_data[1] == "7":
         subcategory = RequestSubCategory.CONSULTATION_ON_TS_AND_DELIVERY
 
-    if subcategory_data[1] == "8":
+    elif subcategory_data[1] == "8":
         subcategory = RequestSubCategory.PROVIDE_DOCUMENTS
+
+    elif subcategory_data[1] == "10":
+        subcategory = RequestSubCategory.ERROR_REQUEST
 
     await callback.message.edit_text("Подкатегория выбрана, заказ закрыт!")
 

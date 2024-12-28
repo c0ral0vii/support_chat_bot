@@ -35,7 +35,8 @@ class RequestSubCategory(str, Enum):
     CARGO_SEARCH = "Поиск груза"
     CONSULTATION_ON_TS_AND_DELIVERY = "Консультация по ТС и срокам доставки"
     PROVIDE_DOCUMENTS = "Предоставление документов, подтверждающих доставку/отправку"
-    CUSTOM_SUBCATEGORY = "Свой вариант подкатегории запроса (возможность написать)"
+    CUSTOM_SUBCATEGORY = "Свой вариант подкатегории запроса"
+    ERROR_REQUEST = "Ошибочный запрос, клиент относится к другому юр. лицу"
 
     NOT_SETUP = "Не установлено / Заказ не закрыт"
 

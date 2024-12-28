@@ -11,7 +11,7 @@ def get_subcategory_markup(request_id: int):
     seven_button = InlineKeyboardButton(text="7. Консультация по ТС и срокам доставки", callback_data=f"subcategory_7_{request_id}")
     eight_button = InlineKeyboardButton(text="8. Предоставление документов, подтверждающих доставку/отправку", callback_data=f"subcategory_8_{request_id}")
     nine_button = InlineKeyboardButton(text="9. Свой вариант подкатегории запроса (возможность написать)", callback_data=f"subcategory_9_{request_id}")
-
+    error_button = InlineKeyboardButton(text="10. Ошибочный запрос, клиент относится к другому юр. лицу", callback_data=f"subcategory_10_{request_id}")
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [first_button],
@@ -23,7 +23,7 @@ def get_subcategory_markup(request_id: int):
         [seven_button],
         [eight_button],
         [nine_button],
-
+        [error_button],
     ])
 
     return keyboard
