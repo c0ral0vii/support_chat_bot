@@ -24,7 +24,6 @@ async def start_chat(callback: types.CallbackQuery, bot: Bot, state: FSMContext)
 
     await state.update_data(from_=callback.from_user.id)
 
-
     if isinstance(manager, dict):
         if request.close == True:
             await callback.message.answer("Ваше обращение закрыто, если остались вопросы создайте ещё одно обращение")
@@ -83,12 +82,16 @@ async def send_message(message: types.Message, bot: Bot, state: FSMContext):
             await state.clear()
 
 
-@message_router.message(F.document, StateFilter(MessageForm.text))
-async def send_file(message: types.Message, bot: Bot, state: FSMContext):
+@message_router.message(F.content_type.in_({'document', 'photo'}), StateFilter(MessageForm.text))
+async def send_media(message: types.Message, bot: Bot, state: FSMContext):
     user_id = message.from_user.id
     manager = await get_manager(user_id=user_id)
 
-    file_id = message.document.file_id
+    if message.content_type == 'document':
+        file_id = message.document.file_id
+    elif message.content_type == 'photo':
+        file_id = message.photo[-1].file_id  # Берем последний элемент, так как он имеет наибольшее разрешение
+
     file_info = await bot.get_file(file_id)
     file_path = file_info.file_path
 
@@ -98,16 +101,22 @@ async def send_file(message: types.Message, bot: Bot, state: FSMContext):
     await create_message(data={
         "from": data["from_"],
         "request_id": data["request_id"],
-        "message": "Отправлен файл",
+        "message": "Отправлен медиафайл",
     })
 
     if isinstance(manager, dict):
-        await bot.send_document(chat_id=data["to"], document=file_id, reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
+        if message.content_type == 'document':
+            await bot.send_document(chat_id=data["to"], document=file_id, reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
+        elif message.content_type == 'photo':
+            await bot.send_photo(chat_id=data["to"], photo=file_id, reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
 
         await message.answer("Ожидайте ответ оператора.", reply_markup=await answer_client_keyboard(user_id=data["to"], request_id=data["request_id"]))
         await state.clear()
     else:
-        await bot.send_document(chat_id=data["to"], document=file_id, reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id=data["to"]))
+        if message.content_type == 'document':
+            await bot.send_document(chat_id=data["to"], document=file_id, reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id=data["to"]))
+        elif message.content_type == 'photo':
+            await bot.send_photo(chat_id=data["to"], photo=file_id, reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id=data["to"]))
 
-        await message.answer(f"Ваш файл отправлен.\n\n\nЧтобы продолжить диалог нажмите кнопку 'Отправить сообщение'", reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
+        await message.answer(f"Ваш медиафайл отправлен.\n\n\nЧтобы продолжить диалог нажмите кнопку 'Отправить сообщение'", reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
         await state.clear()
