@@ -53,7 +53,7 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
             return
 
     moscow_time = await get_time()
-    if 9 < moscow_time.hour < 19:
+    if 8 < moscow_time.hour < 19:
         await message.answer(
             "Добрый день!\n"
             "Напишите Ваш запрос в рабочее время с 09:00 до 19:00 (МСК) по будням и с 09:00 до 17:00 (МСК) по выходным\n"
