@@ -64,14 +64,14 @@ async def send_message(message: types.Message, bot: Bot, state: FSMContext):
         await bot.send_message(chat_id=data["to"], text=f'ИНН: {data["inn"]}\n\n{data["text"]}', reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
         #пользователю
         await message.answer("Ожидайте ответ оператора.", reply_markup=await answer_client_keyboard(user_id=data["to"], request_id=data["request_id"]))
-        await state.clear()
+        # await state.clear()
     else:
         #пользователю
         try:
             await bot.send_message(chat_id=data["to"], text=data["text"], reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id=data["to"]))
             #менеджеру
             await message.answer(f"Ваше сообщение отправлено.\n\n\nЧтобы продолжить диалог нажмите кнопку 'Отправить сообщение'", reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
-            await state.clear()
+            # await state.clear()
         except TelegramForbiddenError as te:
             logger.warning(te)
             await message.answer(f"❗ Произошла ошибка ❗\n\n⚠️Возможно пользователь заблокировал бота или удален, но вы можете попробовать еще раз отправить сообщение ему.", reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
@@ -111,7 +111,7 @@ async def send_media(message: types.Message, bot: Bot, state: FSMContext):
             await bot.send_photo(chat_id=data["to"], photo=file_id, reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
 
         await message.answer("Ожидайте ответ оператора.", reply_markup=await answer_client_keyboard(user_id=data["to"], request_id=data["request_id"]))
-        await state.clear()
+        # await state.clear()
     else:
         if message.content_type == 'document':
             await bot.send_document(chat_id=data["to"], document=file_id, reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id=data["to"]))
@@ -119,4 +119,4 @@ async def send_media(message: types.Message, bot: Bot, state: FSMContext):
             await bot.send_photo(chat_id=data["to"], photo=file_id, reply_markup=await answer_client_keyboard(request_id=data["request_id"], user_id=data["to"]))
 
         await message.answer(f"Ваш медиафайл отправлен.\n\n\nЧтобы продолжить диалог нажмите кнопку 'Отправить сообщение'", reply_markup=answer_manager_keyboard(request_id=data["request_id"], user_id=data["to"]))
-        await state.clear()
+        # await state.clear()

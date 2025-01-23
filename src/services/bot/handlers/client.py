@@ -53,11 +53,13 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
             return
 
     moscow_time = await get_time()
+
     if 8 < moscow_time.hour < 19:
         await message.answer(
-            "Добрый день!\n"
-            "Напишите Ваш запрос в рабочее время с 09:00 до 19:00 (МСК) по будням и с 09:00 до 17:00 (МСК) по выходным\n"
-            "Для уточнения запроса укажите, пожалуйста, ваш ИНН или номер договора.")
+            "Уведомляем Вас, рабочее время службы поддержки с 09:00 до 19:00 (МСК) по будням и с 09:00 до 17:00 (МСК) по выходным.\n"
+        )
+        await message.answer("Введите Ваш ИНН или номер договора:")
+
         await state.clear()
         await state.set_state(ClientForm.contract_number_or_inn)
     else:
@@ -68,9 +70,11 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
 @client_router.message(ClientForm.contract_number_or_inn)
 async def proccess_contract_number_or_inn(message: types.Message, state: FSMContext) -> None:
     await state.update_data(contract_number_or_inn=message.text)
+
     await create_user({
         "user_id": int(message.from_user.id),
         "username": message.from_user.username,
+        "number": "-",
     })
     await message.answer("Выберите, пожалуйста, категорию вашего запроса:", reply_markup=request_categories_keyboard())
 

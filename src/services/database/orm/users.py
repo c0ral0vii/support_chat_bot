@@ -25,6 +25,7 @@ async def create_user(data: Dict[str, Any]) -> User:
             user = User(
                 user_id=data["user_id"],
                 username=data.get('username') if data.get("username") else "Не задано",
+                number=data.get("number", "-"),
             )
 
             session.add(user)
