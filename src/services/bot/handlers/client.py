@@ -90,7 +90,7 @@ async def _request(callback: types.CallbackQuery, bot: Bot, state: FSMContext, d
     else:
         request = await get_request(request_id=int(data["request_id"]), full_model=True)
 
-    await callback.message.answer("В течение 5 минут с вами свяжется первый освободившийся менеджер.\n\n⚠️ Вы можете описать вашу проблему в одном сообщении снизу.",
+    await callback.message.answer("В течение 5 минут с вами свяжется первый освободившийся менеджер.\n\n⚠️Дождитесь ответа оператора, после этого Вы сможете описать проблему и задать интересующие вопросы.",
                             reply_markup=await answer_client_keyboard(request_id=int(request.id), user_id="no"))
 
     for i in managers:
