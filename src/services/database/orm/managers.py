@@ -14,6 +14,8 @@ logger = setup_logger(__name__)
 async def create_managers(all_data: Dict[str, Any]) -> None:
     async with async_session() as session:
         try:
+            if not isinstance(all_data, dict):
+                await session.rollback()
             for user_id, data in all_data.items():
                 logger.debug(user_id, data)
                 try:
@@ -48,6 +50,7 @@ async def create_managers(all_data: Dict[str, Any]) -> None:
                     logger.debug(f"IntegrityError: {e}")
                     await session.rollback()
                     continue
+
                 except Exception as e:
                     logger.debug(f"Exception: {e}")
                     await session.rollback()

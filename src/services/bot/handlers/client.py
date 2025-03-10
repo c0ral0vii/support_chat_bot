@@ -54,7 +54,7 @@ async def start_handler(message: types.Message, state: FSMContext) -> None:
 
     moscow_time = await get_time()
 
-    if 8 < moscow_time.hour < 19:
+    if 0 < moscow_time.hour < 19:
         await message.answer(
             "Уведомляем Вас, рабочее время службы поддержки с 09:00 до 19:00 (МСК) по будням и с 09:00 до 17:00 (МСК) по выходным.\n"
         )
@@ -73,8 +73,7 @@ async def proccess_contract_number_or_inn(message: types.Message, state: FSMCont
 
     await create_user({
         "user_id": int(message.from_user.id),
-        "username": message.from_user.username,
-        "number": "-",
+        "username": "-",
     })
     await message.answer("Выберите, пожалуйста, категорию вашего запроса:", reply_markup=request_categories_keyboard())
 

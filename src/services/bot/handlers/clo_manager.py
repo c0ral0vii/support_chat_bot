@@ -49,8 +49,20 @@ async def get_request(callback: types.CallbackQuery, bot: Bot, state: FSMContext
 
     await state.set_state(RequestSend.request)
     await state.update_data(request=request, manager=True)
+    first_message = None
+    if request.messages:  # Проверяем, есть ли сообщения
+        first_message = request.messages[0].message
 
-    await callback.message.answer(f"Вы приняли запрос под номером - {request.id}.\n\n ИНН: {request.contact_number_or_inn}",
+    response_text = (
+        f"Вы приняли запрос под номером - {request.id}.\n"
+        f"ИНН: {request.contact_number_or_inn}\n\n"
+    )
+
+    if first_message:
+        response_text += f"Первое сообщение: {first_message}"
+    else:
+        response_text += "Сообщений пока нет."
+    await callback.message.answer(response_text,
                                   reply_markup=answer_manager_keyboard(request_id=int(request.id), user_id=manager_id))
 
 

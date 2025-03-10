@@ -41,7 +41,7 @@ async def create_request(data: Dict[str, Any]) -> Request:
 async def accept_request(request_id: int, manager_id: int) -> Request | dict:
     async with async_session() as session:
         try:
-            stmt = select(Request).where(Request.id == request_id)
+            stmt = select(Request).where(Request.id == request_id).options(selectinload(Request.messages))
             result = await session.execute(stmt)
             request = result.scalar_one_or_none()
             manager = await get_manager(manager_id)

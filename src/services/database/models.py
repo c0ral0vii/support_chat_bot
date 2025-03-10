@@ -46,8 +46,6 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
-    username: Mapped[str] = mapped_column(String)
-    number: Mapped[str] = mapped_column(nullable=True)
 
     requests: Mapped[list["Request"]] = relationship("Request", back_populates="user")
 
